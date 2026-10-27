@@ -32,10 +32,13 @@ from src.classifier import StylometryClassifier
 from src.corpus_builder import build_hierarchical_stylometry_dataset
 from src.feature_extractor import StylometricFeatureExtractor
 from src.gutenberg_fetcher import load_universal_canon_corpus, sync_author_corpus
+from src.literary_network import LiteraryPhylogenyEngine
 from src.visualizer import (
+    plot_author_distance_heatmap,
     plot_author_stylistic_comparison,
     plot_confusion_matrix,
     plot_feature_importance,
+    plot_literary_dendrogram,
     plot_probability_bars,
     plot_rolling_stylometry,
     plot_stylometric_galaxy,
@@ -350,14 +353,15 @@ with st.sidebar:
 
 
 # ==============================================================================
-# BEŞ ANA SEKME (TABS)
+# ALTI ANA SEKME (TABS)
 # ==============================================================================
-tab_prediction, tab_catalog, tab_comparison, tab_performance, tab_forensics = st.tabs([
+tab_prediction, tab_catalog, tab_comparison, tab_performance, tab_forensics, tab_network = st.tabs([
     "🔍 Sekme 1: Canlı Yazar & Dönem Tespiti",
     "📖 Sekme 2: Edebiyat Tarihi & Külliyat Gezgini",
     "⚖️ Sekme 3: Üslup Evrimi & Yazar Karşılaştırma",
     "📊 Sekme 4: Model Performansı & Birim Testler",
     "🕵️‍♂️ Sekme 5: Adli Stilometri & 2B Üslup Galaksisi",
+    "🌳 Sekme 6: Edebi Soy Ağacı & Etki Ağı",
 ])
 
 
@@ -894,6 +898,149 @@ with tab_forensics:
 
     with st.expander("🔍 37 Yazarın PCA Merkez Koordinatları (Centroids)"):
         st.dataframe(pca_data["centroids"], use_container_width=True, hide_index=True)
+
+
+# ------------------------------------------------------------------------------
+# SEKME 6: EDEBİ SOY AĞACI & ETKİ AĞI
+# ------------------------------------------------------------------------------
+with tab_network:
+    st.markdown("### 🌳 37 Kanonik Yazarın Edebi Soy Ağacı & Etki Ağı")
+    st.markdown(
+        "Hesaplamalı edebiyat ve filogenetik stilometri (**Phylogenetic Stylometry**), yazarlar arasındaki kronolojik ve "
+        "tarihsel mesafelerin ötesine geçerek **sözdizimsel, sözcüksel ve morfolojik genetik akrabalıkları** ortaya koyar. "
+        "Aşağıdaki soy ağacı (Dendrogram) ve üslup ikizleri analizi; 600 yıllık İngiliz ve Amerikan edebiyatındaki "
+        "gizli edebi miras bağlarını ve yüzyıllar arası üslup akrabalıklarını açığa çıkarır."
+    )
+
+    # 1. Hiyerarşik Kümeleme ve Soy Ağacı
+    st.markdown("---")
+    st.markdown("#### 🌿 Alt Bölüm A: Hiyerarşik Edebi Soy Ağacı (Phylogenetic Dendrogram)")
+    st.caption("Average Linkage ve Cosine mesafesi ile 70+ stilometrik boyut üzerinden kümelenmiş 37 kanonik yazar.")
+
+    col_link1, col_link2 = st.columns([2, 1])
+    with col_link1:
+        linkage_method = st.selectbox(
+            "Hiyerarşik Kümeleme Bağlantı Metodu (Linkage Method):",
+            options=["average", "complete", "single"],
+            format_func=lambda x: {
+                "average": "Average Linkage (UPGMA - Önerilen Dengeli Kümeleme)",
+                "complete": "Complete Linkage (En Uzak Mesafe Kümelemesi)",
+                "single": "Single Linkage (En Yakın Komşu Kümelemesi)",
+            }[x],
+            index=0,
+            key="linkage_select",
+        )
+    with col_link2:
+        distance_metric_choice = st.selectbox(
+            "Mesafe Metriği:",
+            options=["cosine", "burrows_delta"],
+            format_func=lambda x: "Cosine Mesafesi (Açısal Üslup Yakınlığı)" if x == "cosine" else "Burrows' Delta (Manhattan Z-Skor)",
+            index=0,
+            key="phylogeny_metric_select",
+        )
+
+    with st.spinner("37 yazarın çift yönlü mesafe matrisi ve edebi soy ağacı hesaplanıyor..."):
+        phylogeny_engine = LiteraryPhylogenyEngine(
+            X_corpus=atlas_info["df_X"],
+            y_authors=list(atlas_info["y_authors"]),
+            y_eras=list(atlas_info["y_eras"]),
+            metric=distance_metric_choice,
+        )
+        linkage_mat = phylogeny_engine.compute_linkage_matrix(method=linkage_method)
+
+    fig_dendro = plot_literary_dendrogram(
+        linkage_matrix=linkage_mat,
+        authors=phylogeny_engine.authors_,
+        eras=[phylogeny_engine.eras_map_.get(a, "") for a in phylogeny_engine.authors_],
+        title="37 Kanonik Yazarın Edebi Soy Ağacı (Phylogenetic Stylometry Dendrogram)",
+    )
+    st.pyplot(fig_dendro)
+    plt.close(fig_dendro)
+
+    # 2. Tarihsel Üslup İkizleri (Stylistic Soulmates)
+    st.markdown("---")
+    st.markdown("#### 🎭 Alt Bölüm B: Tarihsel Üslup İkizleri (Cross-Era Stylistic Soulmates)")
+    st.markdown(
+        "Her yazarın tüm edebiyat tarihindeki (hem kendi çağından hem de farklı yüzyıllardan) "
+        "en yakın üslup akrabalarını keşfedin (Örn: *Jonathan Swift* ➔ *George Orwell*, *Shakespeare* ➔ *Marlowe*)."
+    )
+
+    col_target_auth, col_top_k = st.columns([3, 1])
+    with col_target_auth:
+        selected_author = st.selectbox(
+            "Üslup İkizleri İncelenecek Yazar:",
+            options=phylogeny_engine.authors_,
+            index=phylogeny_engine.authors_.index("Jonathan Swift") if "Jonathan Swift" in phylogeny_engine.authors_ else 0,
+            key="soulmate_auth_select",
+        )
+    with col_top_k:
+        soulmates_k = st.selectbox("Gösterilecek İkiz Sayısı:", options=[3, 4, 5], index=0, key="soulmates_k_select")
+
+    soulmates = phylogeny_engine.get_stylistic_soulmates(selected_author, top_k=soulmates_k)
+
+    target_era = phylogeny_engine.eras_map_.get(selected_author, "Bilinmeyen")
+    st.markdown(f"##### 🎯 **{selected_author}** ({target_era}) İçin Tespit Edilen En Yakın {len(soulmates)} Üslup İkizi:")
+
+    cols = st.columns(len(soulmates))
+    for idx, (col_s, sm) in enumerate(zip(cols, soulmates), 1):
+        with col_s:
+            badge_color = "#3b82f6" if "Dönemdaş" in sm["relationship_type"] else "#8b5cf6"
+            st.markdown(
+                f"""
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); min-height: 260px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">İkiz #{idx}</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 4px;">{sm['author']}</div>
+                    <div style="font-size: 0.85rem; color: #475569; margin-bottom: 8px;">🏛️ {sm['era']}</div>
+                    <div style="background: {badge_color}15; color: {badge_color}; border: 1px solid {badge_color}40; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; margin-bottom: 10px;">
+                        {sm['relationship_type']}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.88rem;">
+                        <span style="color: #64748b;">Akrabalık Skoru:</span>
+                        <strong style="color: #16a34a;">%{sm['similarity_pct']}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.88rem;">
+                        <span style="color: #64748b;">Üslup Mesafesi:</span>
+                        <code style="color: #0f172a;">{sm['distance']}</code>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #334155; border-top: 1px dashed #cbd5e1; padding-top: 8px; line-height: 1.4;">
+                        💡 <b>Üslup Köprüsü:</b> {sm['stylistic_insight']}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    # 3. Yazarlar Arası Mesafe Isı Haritası
+    st.markdown("---")
+    st.markdown("#### 🗺️ Alt Bölüm C: Üslup Akrabalık ve Çift Yönlü Mesafe Isı Haritası (Heatmap)")
+
+    col_filter_era, col_heat_info = st.columns([2, 1])
+    with col_filter_era:
+        filter_heat_era = st.selectbox(
+            "Döneme Göre Odaklan (Opsiyonel):",
+            options=["Tüm 37 Yazarı Göster (Global Matris)"] + LITERARY_ERAS,
+            index=0,
+            key="heat_era_select",
+        )
+    with col_heat_info:
+        st.write("")
+        st.caption("Koyu/canlı renkler birbirine üslupça en yakın yazarları temsil eder.")
+
+    if filter_heat_era == "Tüm 37 Yazarı Göster (Global Matris)":
+        heat_authors = phylogeny_engine.authors_
+    else:
+        heat_authors = [a for a in phylogeny_engine.authors_ if phylogeny_engine.eras_map_.get(a) == filter_heat_era]
+
+    if heat_authors:
+        fig_heat = plot_author_distance_heatmap(
+            distance_matrix=phylogeny_engine.distance_df_,
+            authors=heat_authors,
+            title=f"Yazarlar Arası Üslup Akrabalık Matrisi ({filter_heat_era})",
+        )
+        st.pyplot(fig_heat)
+        plt.close(fig_heat)
+    else:
+        st.info("Bu filtreye uygun yazar bulunamadı.")
 
 
 # ==============================================================================

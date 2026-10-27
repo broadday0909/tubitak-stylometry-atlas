@@ -8,12 +8,12 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-30%2F30%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-35%2F35%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
   <b>Hesaplamalı Edebiyat (Computational Literary Studies) ve Doğal Dil İşleme (NLP) Altyapısı</b><br>
-  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi
+  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi • Edebi Soy Ağacı & Etki Ağı
 </p>
 
 </div>
@@ -22,9 +22,22 @@
 
 ## 📌 Proje Genel Bakışı
 
-Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)** ve **2B üslup uzayı izdüşümü (PCA Galaxy)** yapan ileri düzey bir hesaplamalı edebiyat sistemidir.
+Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)**, **2B üslup galaksisi (PCA Galaxy)** ve **filogenetik edebi soy ağacı (Phylogenetic Dendrogram)** modellerini bir araya getiren kapsamlı bir yapay zekâ sistemidir.
 
 TÜBİTAK standartlarına uygun olarak tasarlanan mimari, Geoffrey Chaucer'ın Orta Çağ İngilizcesinden Virginia Woolf ve James Joyce'un Modernist bilinç akışına uzanan **600 yıllık İngiliz ve Amerikan edebiyatı tarihini** 7 ana edebi dönem ve 37 kanonik yazar üzerinden modeller.
+
+---
+
+## 🌟 Aşama 9 Öne Çıkan Yenilikler (Edebi Soy Ağacı & Etki Ağı)
+
+1. **Hiyerarşik Edebi Soy Ağacı (Phylogenetic Stylometry Dendrogram):**
+   * 37 kanonik yazarın 70+ stilometrik boyuttaki merkez noktaları (centroids) arasındaki Cosine / Burrows' Delta mesafeleri hesaplanmış; `scipy.cluster.hierarchy` ile *Average (UPGMA)*, *Complete* ve *Single* linkage yöntemleri kullanılarak tüm edebiyat tarihini dallandıran yüksek çözünürlüklü yatay Dendrogram soy ağacı inşa edilmiştir.
+2. **Tarihsel Üslup İkizleri (Cross-Era Stylistic Soulmates):**
+   * Kronolojik sınırların ötesine geçerek bir yazarın üslupça en yakın olduğu akrabalarını tespit eder. Örneğin, Aydınlanma Çağı hiciv ustası *Jonathan Swift*'in 20. yüzyıldaki modern alegorik hiciv ikizinin *George Orwell* olduğunu matematiksel olarak kanıtlar.
+3. **Yazarlar Arası Üslup Akrabalık Matrisi (Heatmap):**
+   * Seçilen edebi dönem veya külliyatın tamamı için çift yönlü (pairwise) simetrik mesafe matrisini görselleştiren etkileşimli ısı haritası sunar.
+4. **Kapsamlı Test Doğrulaması:**
+   * 35 birim testinden oluşan test süiti `%100 OK` doğrulukla çalışmaktadır.
 
 ---
 

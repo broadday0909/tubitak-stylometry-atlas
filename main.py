@@ -29,6 +29,7 @@ from src.classifier import StylometryClassifier
 from src.corpus_builder import build_hierarchical_stylometry_dataset
 from src.feature_extractor import StylometricFeatureExtractor
 from src.gutenberg_fetcher import load_universal_canon_corpus
+from src.literary_network import LiteraryPhylogenyEngine
 
 
 def get_blind_era_and_author_passages() -> List[Tuple[str, str, str, str]]:
@@ -191,7 +192,24 @@ def main() -> None:
     print(f"   37 Yazar Merkez Noktaları Hesaplandı. PC1: %{var1} | PC2: %{var2} varyans açıklandı.")
     print(f"   Test Metni Koordinatı: PC1={q_pt['PC1']}, PC2={q_pt['PC2']}")
 
-    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 8) boru hattı kusursuz çalıştı.")
+    print("\n" + "=" * 95)
+    print(" [7] EDEBİ SOY AĞACI, FILOGENETİK KÜMELEME & ÜSLUP İKİZLERİ (AŞAMA 9)")
+    print("=" * 95)
+    phylogeny = LiteraryPhylogenyEngine(df_X, list(s_y_author), list(s_y_era), metric="cosine")
+    linkage_mat = phylogeny.compute_linkage_matrix(method="average")
+    print(f"\n-> Hiyerarşik Edebi Soy Ağacı (Linkage Matrix):")
+    print(f"   37 Kanonik Yazar için {linkage_mat.shape[0]} adet kümeleme birleşimi hesaplandı.")
+
+    sample_target = "Jonathan Swift"
+    soulmates = phylogeny.get_stylistic_soulmates(sample_target, top_k=3)
+    print(f"\n-> Tarihsel Üslup İkizleri ({sample_target} İçin En Yakın 3 İkiz):")
+    soul_table = [
+        [idx, s["author"], s["era"], f"%{s['similarity_pct']}", s["distance"], s["relationship_type"][:38] + ".."]
+        for idx, s in enumerate(soulmates, 1)
+    ]
+    print(tabulate(soul_table, headers=["#", "Üslup İkizi", "Dönemi", "Benzerlik", "Mesafe", "İlişki Türü"], tablefmt="fancy_grid"))
+
+    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 9) boru hattı kusursuz çalıştı.")
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.figure import Figure
+from scipy.cluster.hierarchy import dendrogram
 from sklearn.metrics import confusion_matrix
 
 # Akademik ve modern görsel tema ayarları
@@ -506,4 +507,102 @@ def plot_stylometric_galaxy(
     sns.despine(top=True, right=True)
     fig.tight_layout()
     return fig
+
+
+def plot_literary_dendrogram(
+    linkage_matrix: np.ndarray,
+    authors: List[str],
+    eras: Optional[List[str]] = None,
+    title: str = "37 Kanonik Yazarın Edebi Soy Ağacı (Phylogenetic Stylometry Dendrogram)",
+) -> Figure:
+    """
+    37 yazarı üslup benzerliklerine göre hiyerarşik kümeleyen
+    yüksek çözünürlüklü yatay Dendrogram grafiği çizer.
+    
+    Args:
+        linkage_matrix: scipy.cluster.hierarchy.linkage çıktısı.
+        authors: Yazar isimleri listesi (yaprak etiketleri).
+        eras: Opsiyonel edebi dönem listesi.
+        title: Grafik başlığı.
+        
+    Returns:
+        Figure: Matplotlib Figure nesnesi.
+    """
+    if eras and len(eras) == len(authors):
+        labels = [f"{a} [{e.split('&')[0].strip()}]" for a, e in zip(authors, eras)]
+    else:
+        labels = authors
+
+    fig_height = max(8.5, len(authors) * 0.28)
+    fig, ax = plt.subplots(figsize=(11.5, fig_height), dpi=120)
+
+    color_thresh = 0.7 * float(np.max(linkage_matrix[:, 2])) if len(linkage_matrix) > 0 else None
+
+    dendrogram(
+        linkage_matrix,
+        orientation="left",
+        labels=labels,
+        ax=ax,
+        color_threshold=color_thresh,
+        above_threshold_color="#64748b",
+        leaf_font_size=9,
+    )
+
+    ax.set_title(title, fontsize=13, weight="bold", pad=16, color="#0f172a")
+    ax.set_xlabel("Üslup Mesafesi (Stylometric Distance)", fontsize=10.5, weight="semibold", color="#334155")
+    ax.set_ylabel("Kanonik Yazarlar", fontsize=10.5, weight="semibold", color="#334155")
+    ax.tick_params(axis="y", labelsize=8.8)
+    ax.grid(True, axis="x", linestyle="--", alpha=0.5, color="#cbd5e1")
+
+    sns.despine(top=True, right=True)
+    fig.tight_layout()
+    return fig
+
+
+def plot_author_distance_heatmap(
+    distance_matrix: pd.DataFrame,
+    authors: Optional[List[str]] = None,
+    title: str = "Yazarlar Arası Üslup Akrabalık ve Mesafe Matrisi",
+) -> Figure:
+    """
+    Seçilen yazarlar veya tüm külliyat için çift yönlü üslup mesafesi
+    ısı haritası (distance heatmap) üretir.
+    
+    Args:
+        distance_matrix: NxN boyutlu simetrik mesafe matrisi.
+        authors: Görselleştirilecek yazarlar alt kümesi (None ise tümü).
+        title: Grafik başlığı.
+        
+    Returns:
+        Figure: Matplotlib Figure nesnesi.
+    """
+    df = distance_matrix.copy()
+    if authors:
+        valid_authors = [a for a in authors if a in df.index]
+        if valid_authors:
+            df = df.loc[valid_authors, valid_authors]
+
+    n_items = len(df)
+    annot = n_items <= 16
+    fig_size = max(7.5, min(14.0, n_items * 0.38 + 3.0))
+    fig, ax = plt.subplots(figsize=(fig_size, fig_size * 0.88), dpi=120)
+
+    sns.heatmap(
+        df,
+        cmap="YlGnBu_r",
+        annot=annot,
+        fmt=".2f" if annot else "",
+        linewidths=0.8 if n_items <= 25 else 0.2,
+        linecolor="#ffffff",
+        cbar_kws={"label": "Üslup Mesafesi (Koyu Renk = Yüksek Akrabalık)"},
+        ax=ax,
+    )
+
+    ax.set_title(title, fontsize=12.5, weight="bold", pad=15, color="#0f172a")
+    ax.tick_params(axis="x", rotation=45, labelsize=8.5)
+    ax.tick_params(axis="y", rotation=0, labelsize=8.5)
+
+    fig.tight_layout()
+    return fig
+
 
