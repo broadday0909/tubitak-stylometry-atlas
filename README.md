@@ -101,7 +101,7 @@ Gereksinim: Python 3.10 veya üzeri.
 
 ```bash
 # 1. Depoyu klonlayın veya indirin
-git clone https://github.com/KULLANICI_ADINIZ/tubitak-stylometry-atlas.git
+git clone https://github.com/broadday0909/tubitak-stylometry-atlas.git
 cd tubitak-stylometry-atlas
 
 # 2. Sanal ortam oluşturun ve aktif edin
