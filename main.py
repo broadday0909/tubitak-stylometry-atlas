@@ -1,0 +1,164 @@
+"""
+TÜBİTAK Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası
+===========================================================
+Konsol Çalıştırma ve Çift Katmanlı Model Doğrulama Hattı (main.py)
+
+Chaucer'dan Modernizm'e: 7 Edebi Dönem, 37 Kanonik Yazar,
+Hiyerarşik Sınıflandırma ve Burrows' Delta Z-Skor Mesafesi Analizi.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from typing import Dict, List, Tuple
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except AttributeError:
+        pass
+
+import pandas as pd
+from tabulate import tabulate
+
+from src.canon_catalog import CANON_CATALOG, LITERARY_ERAS
+from src.classifier import StylometryClassifier
+from src.corpus_builder import build_hierarchical_stylometry_dataset
+from src.feature_extractor import StylometricFeatureExtractor
+from src.gutenberg_fetcher import load_universal_canon_corpus
+
+
+def get_blind_era_and_author_passages() -> List[Tuple[str, str, str, str]]:
+    """
+    Modelin eğitim setinde olmayan, 7 farklı edebi dönemi temsil eden kör test pasajları.
+    (Pasaj_ID, Gerçek_Dönem, Gerçek_Yazar, Metin)
+    """
+    return [
+        (
+            "Test 1 (Middle English)",
+            "Middle English",
+            "Geoffrey Chaucer",
+            "Whan that Aprille with his shoures soote the droghte of March hath perced to the roote, "
+            "and bathed every veyne in swich licour of which vertu engendred is the flour; "
+            "whan Zephirus eek with his sweete breeth inspired hath in every holt and heeth."
+        ),
+        (
+            "Test 2 (Renaissance)",
+            "Renaissance & Early Modern",
+            "William Shakespeare",
+            "To be, or not to be, that is the question: whether 'tis nobler in the mind to suffer "
+            "the slings and arrows of outrageous fortune, or to take arms against a sea of troubles "
+            "and by opposing end them. To die—to sleep, no more."
+        ),
+        (
+            "Test 3 (Enlightenment)",
+            "Enlightenment & 18th Century",
+            "Jonathan Swift",
+            "My father had a small estate in Nottinghamshire; I was the third of five sons. He sent me to Emanuel College "
+            "in Cambridge, at fourteen years old, where I resided three years, and applied myself close to my studies."
+        ),
+        (
+            "Test 4 (Romanticism)",
+            "Romanticism",
+            "Jane Austen",
+            "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. "
+            "However little known the feelings or views of such a man may be on his first entering a neighbourhood."
+        ),
+        (
+            "Test 5 (Victorian)",
+            "Victorian Era",
+            "Charles Dickens",
+            "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, "
+            "it was the epoch of belief, it was the epoch of incredulity, it was the season of light, it was the season of darkness."
+        ),
+        (
+            "Test 6 (American Classics)",
+            "American Classics",
+            "Edgar Allan Poe",
+            "True!—nervous—very, very dreadfully nervous I had been and am; but why will you say that I am mad? "
+            "The disease had sharpened my senses—not destroyed—not dulled them. Above all was the sense of hearing acute."
+        ),
+        (
+            "Test 7 (Modernism)",
+            "Modernism",
+            "Virginia Woolf",
+            "Mrs. Dalloway said she would buy the flowers herself. For Lucy had her work cut out for her. "
+            "And then, thought Clarissa Dalloway, what a morning—fresh as if issued to children on a beach. What a lark! What a plunge!"
+        ),
+    ]
+
+
+def main() -> None:
+    print("=" * 95)
+    print(" TÜBİTAK: EVRENSEL İNGİLİZ DİLİ VE EDEBİYATI STİLOMETRİ ATLASI (CHAUCER'DAN MODERNİZM'E)")
+    print(" Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project")
+    print(" 7 Edebi Dönem, 37 Kanonik Yazar, Hiyerarşik Koşullandırma (Hierarchical Conditioning) & Delta")
+    print("=" * 95)
+
+    base_dir = Path(__file__).resolve().parent
+    data_dir = base_dir / "data" / "raw"
+
+    print("\n[1] Kanon Kataloğu ve Külliyat Hazırlanıyor...")
+    corpus_dict = load_universal_canon_corpus(data_dir, try_download=False)
+    print(f"    -> Yüklenen Kanonik Yazar Sayısı: {len(corpus_dict)}")
+    print(f"    -> Kapsanan Edebi Dönem Sayısı : {len(LITERARY_ERAS)}")
+
+    print("\n[2] Hiyerarşik Veri Seti Üretiliyor (Örneklem Bloklama)...")
+    extractor = StylometricFeatureExtractor()
+    df_X, s_y_author, s_y_era = build_hierarchical_stylometry_dataset(
+        corpus_dict,
+        extractor=extractor,
+        chunk_size=90,
+        overlap=35,
+    )
+    print(f"    -> Toplam Örnek Blok Sayısı: {len(df_X)}")
+    print(f"    -> Çıkarılan Stilometrik Boyut: {df_X.shape[1]} öznitelik")
+
+    print("\n[3] Çift Katmanlı Sınıflandırıcı (Linear SVM Pipeline) Eğitiliyor...")
+    clf = StylometryClassifier(model_type="svm", cv_folds=3, random_state=42, feature_extractor=extractor)
+    train_res = clf.train_hierarchical(df_X, s_y_author, s_y_era)
+
+    print(f"    -> Katman 1 (Dönem) 3-Fold CV Doğruluğu: %{train_res['era_layer']['mean_accuracy']*100:.1f}")
+    print(f"    -> Katman 2 (Yazar) 3-Fold CV Doğruluğu: %{train_res['author_layer']['mean_accuracy']*100:.1f}")
+
+    print("\n" + "=" * 95)
+    print(" [4] KÖR TEST: 7 EDEBİ DÖNEMDEN SEÇİLMİŞ METİNLERİN DÖNEM, YAZAR VE DELTA ANALİZİ")
+    print("=" * 95)
+    blind_tests = get_blind_era_and_author_passages()
+
+    results_table = []
+    for test_id, true_era, true_author, passage in blind_tests:
+        pred_era, era_probs = clf.predict_era(passage)
+        top_authors = clf.predict_top_authors(passage, top_k=3, use_hierarchical=True)
+        delta_list = clf.compute_burrows_delta(passage, top_k=2)
+
+        best_author, best_prob = top_authors[0]
+        era_match = "✓" if pred_era == true_era else "✗"
+        auth_match = "✓" if best_author == true_author else "✗"
+
+        # Burrows' Delta 1. aday
+        delta_top_author, delta_dist, delta_sim = delta_list[0]
+
+        results_table.append([
+            test_id,
+            f"{true_era[:12]}..",
+            f"{pred_era[:12]}.. ({era_match})",
+            f"{true_author.split()[-1]}",
+            f"{best_author.split()[-1]} ({auth_match}) %{best_prob*100:.0f}",
+            f"{delta_top_author.split()[-1]} (Δ:{delta_dist:.2f})",
+        ])
+
+    headers = ["Test Pasajı", "Gerçek Dönem", "Tahmin Dönem", "Gerçek Yazar", "Tahmin Yazar", "Burrows' Delta En Yakın"]
+    print(tabulate(results_table, headers=headers, tablefmt="fancy_grid"))
+
+    print("\n[5] En Ayırt Edici Kanonik Stilometri Öznitelikleri (Top 10):")
+    df_imp = clf.get_feature_importances(top_n=10)
+    print(tabulate(df_imp, headers="keys", tablefmt="fancy_grid", showindex=True))
+
+    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası boru hattı kusursuz çalıştı.")
+
+
+if __name__ == "__main__":
+    main()

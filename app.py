@@ -1,0 +1,682 @@
+"""
+TÜBİTAK Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası
+===========================================================
+Etkileşimli Streamlit Web Uygulaması (app.py)
+Chaucer'dan Modernizm'e: 7 Edebi Dönem, 37 Kanonik Yazar, Hiyerarşik Sınıflandırma ve Burrows' Delta
+"""
+
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+# Windows konsolunda Türkçe ve Unicode karakterlerin düzgün görüntülenmesi için
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except AttributeError:
+        pass
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import streamlit as st
+from sklearn.model_selection import train_test_split
+
+from src.canon_catalog import CANON_CATALOG, LITERARY_ERAS, AuthorEntry, get_all_eras, get_authors_by_era
+from src.classifier import StylometryClassifier
+from src.corpus_builder import build_hierarchical_stylometry_dataset
+from src.feature_extractor import StylometricFeatureExtractor
+from src.gutenberg_fetcher import load_universal_canon_corpus, sync_author_corpus
+from src.visualizer import (
+    plot_author_stylistic_comparison,
+    plot_confusion_matrix,
+    plot_feature_importance,
+    plot_probability_bars,
+)
+
+# ==============================================================================
+# Sayfa Konfigürasyonu ve CSS Teması
+# ==============================================================================
+st.set_page_config(
+    page_title="TÜBİTAK | İngiliz Edebiyatı Stilometri Atlası",
+    page_icon="🏛️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+st.markdown(
+    """
+    <style>
+    .main-header {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.1rem;
+    }
+    .sub-header {
+        font-size: 1.05rem;
+        color: #475569;
+        margin-bottom: 1.2rem;
+    }
+    .era-badge {
+        display: inline-block;
+        background-color: #3b82f6;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .prediction-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        color: white;
+        border-radius: 14px;
+        padding: 24px;
+        text-align: center;
+        margin: 15px 0 20px 0;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+    .prediction-title {
+        font-size: 2.4rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        margin: 8px 0;
+    }
+    .era-title {
+        font-size: 1.3rem;
+        color: #93c5fd;
+        font-weight: 600;
+    }
+    .kpi-card {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px;
+        text-align: center;
+    }
+    .kpi-val {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1e3a8a;
+    }
+    .kpi-lbl {
+        font-size: 0.82rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .dev-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #38bdf8;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        margin-bottom: 16px;
+    }
+    .dev-footer {
+        text-align: center;
+        padding: 24px 0 16px 0;
+        margin-top: 40px;
+        border-top: 1px solid #e2e8f0;
+        color: #64748b;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# ==============================================================================
+# Model ve Külliyat Başlatma (Streamlit Cache)
+# ==============================================================================
+@st.cache_resource(show_spinner="Evrensel Edebiyat Külliyatı taranıyor ve çift katmanlı model eğitiliyor...")
+def initialize_universal_atlas(
+    model_type: str = "svm",
+    chunk_size: int = 90,
+    overlap: int = 35,
+) -> Tuple[StylometryClassifier, Dict[str, Any], pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, pd.Series, pd.Series]:
+    """
+    37 kanonik yazarın edebi metinlerini hazırlar, bloklara böler ve
+    çift katmanlı (Dönem + Yazar) sınıflandırıcıyı eğitir.
+    """
+    data_dir = Path(__file__).resolve().parent / "data" / "raw"
+    corpus_dict = load_universal_canon_corpus(data_dir, try_download=False)
+
+    extractor = StylometricFeatureExtractor()
+    df_X, s_y_author, s_y_era = build_hierarchical_stylometry_dataset(
+        corpus_dict,
+        extractor=extractor,
+        chunk_size=chunk_size,
+        overlap=overlap,
+    )
+
+    X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test = train_test_split(
+        df_X,
+        s_y_author,
+        s_y_era,
+        test_size=0.20,
+        random_state=42,
+        stratify=s_y_era,
+    )
+
+    clf = StylometryClassifier(
+        model_type=model_type,
+        cv_folds=3,
+        random_state=42,
+        feature_extractor=extractor,
+    )
+
+    training_results = clf.train_hierarchical(X_train, y_auth_train, y_era_train)
+    eval_results = clf.evaluate(X_test, y_auth_test)
+
+    atlas_info = {
+        "total_samples": len(df_X),
+        "feature_count": df_X.shape[1],
+        "total_authors": len(set(s_y_author)),
+        "total_eras": len(set(s_y_era)),
+        "authors_list": sorted(list(set(s_y_author))),
+        "eras_list": LITERARY_ERAS,
+        "author_cv": training_results["author_layer"],
+        "era_cv": training_results["era_layer"],
+        "eval_results": eval_results,
+    }
+
+    return clf, atlas_info, X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test
+
+
+# ==============================================================================
+# Hızlı Test İçin Kanonik Edebi Pasaj Şablonları
+# ==============================================================================
+PRELOADED_PASSAGES = {
+    "Seçiniz (Hazır Kanonik Test Pasajı)": "",
+    "Middle English: Geoffrey Chaucer (Canterbury Tales)": (
+        "Whan that Aprille with his shoures soote the droghte of March hath perced to the roote, "
+        "and bathed every veyne in swich licour of which vertu engendred is the flour; "
+        "whan Zephirus eek with his sweete breeth inspired hath in every holt and heeth the tendre croppes."
+    ),
+    "Renaissance: William Shakespeare (Hamlet)": (
+        "To be, or not to be, that is the question: whether 'tis nobler in the mind to suffer "
+        "the slings and arrows of outrageous fortune, or to take arms against a sea of troubles "
+        "and by opposing end them. To die—to sleep, no more; and by a sleep to say we end "
+        "the heart-ache and the thousand natural shocks that flesh is heir to."
+    ),
+    "Renaissance: Christopher Marlowe (Doctor Faustus)": (
+        "Was this the face that launch'd a thousand ships, and burnt the topless towers of Ilium? "
+        "Sweet Helen, make me immortal with a kiss! Her lips suck forth my soul; see where it flies! "
+        "Come, Helen, come, give me my soul again. Here will I dwell, for heaven is in these lips."
+    ),
+    "Renaissance: John Milton (Paradise Lost)": (
+        "Of Man's first disobedience, and the fruit of that forbidden tree, whose mortal taste "
+        "brought death into the World, and all our woe, with loss of Eden, till one greater Man "
+        "restore us, and regain the blissful seat, sing Heavenly Muse."
+    ),
+    "Enlightenment: Jonathan Swift (Gulliver's Travels)": (
+        "My father had a small estate in Nottinghamshire; I was the third of five sons. He sent me to Emanuel College "
+        "in Cambridge, at fourteen years old, where I resided three years, and applied myself close to my studies; "
+        "but the charge of maintaining me, being too great for a narrow fortune, I was bound apprentice to Mr. Bates."
+    ),
+    "Romanticism: Jane Austen (Pride and Prejudice)": (
+        "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. "
+        "However little known the feelings or views of such a man may be on his first entering a neighbourhood, "
+        "this truth is so well fixed in the minds of the surrounding families."
+    ),
+    "Romanticism: Mary Shelley (Frankenstein)": (
+        "It was on a dreary night of November that I beheld the accomplishment of my toils. With an anxiety that "
+        "almost amounted to agony, I collected the instruments of life around me, that I might infuse a spark of being "
+        "into the lifeless thing that lay at my feet. The rain pattered dismally against the panes."
+    ),
+    "Victorian: Charles Dickens (A Tale of Two Cities)": (
+        "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, "
+        "it was the epoch of belief, it was the epoch of incredulity, it was the season of light, it was the season of darkness, "
+        "it was the spring of hope, it was the winter of despair, we had everything before us."
+    ),
+    "Victorian: Oscar Wilde (The Picture of Dorian Gray)": (
+        "The studio was filled with the rich odour of roses, and when the light summer wind stirred amidst the trees of the garden, "
+        "there came through the open door the heavy scent of the lilac, or the more delicate perfume of the pink-flowering thorn. "
+        "The only way to get rid of a temptation is to yield to it."
+    ),
+    "American Classics: Edgar Allan Poe (The Tell-Tale Heart)": (
+        "True!—nervous—very, very dreadfully nervous I had been and am; but why will you say that I am mad? "
+        "The disease had sharpened my senses—not destroyed—not dulled them. Above all was the sense of hearing acute. "
+        "I heard all things in the heaven and in the earth. Hearken! and observe how healthily I tell you the story."
+    ),
+    "American Classics: Herman Melville (Moby Dick)": (
+        "Call me Ishmael. Some years ago—never mind how long precisely—having little or no money in my purse, "
+        "and nothing particular to interest me on shore, I thought I would sail about a little and see the watery part of the world. "
+        "Towards thee I roll, thou all-destroying but unconquering whale; to the last I grapple with thee!"
+    ),
+    "Modernism: Virginia Woolf (Mrs. Dalloway)": (
+        "Mrs. Dalloway said she would buy the flowers herself. For Lucy had her work cut out for her. "
+        "And then, thought Clarissa Dalloway, what a morning—fresh as if issued to children on a beach. "
+        "What a lark! What a plunge! For so it had always seemed to her, with a little squeak of the hinges."
+    ),
+    "Modernism: James Joyce (Ulysses)": (
+        "Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed. "
+        "A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air. He held the bowl aloft and intoned: "
+        "—Introibo ad altare Dei. Halted, he peered down the dark winding stairs."
+    ),
+    "Modernism: Ernest Hemingway (A Farewell to Arms)": (
+        "In the late summer of that year we lived in a house in a village that looked across the river and the plain to the mountains. "
+        "In the bed of the river there were pebbles and boulders, dry and white in the sun, and the water was clear and swiftly moving."
+    ),
+}
+
+
+# ==============================================================================
+# Başlık ve Kenar Çubuğu (Sidebar)
+# ==============================================================================
+st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
+    'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
+    unsafe_allow_html=True,
+)
+
+with st.sidebar:
+    st.image("https://upload.wikimedia.org/wikipedia/tr/b/b8/T%C3%BCbitak_logo.png", width=140)
+    st.markdown(
+        """
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #38bdf8; padding: 10px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; text-align: center; border: 1px solid rgba(56, 189, 248, 0.35); margin: 8px 0 16px 0;">
+            ✨ Developed by Bayram Akpamukçu
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("### ⚙️ Atlas Yapılandırması")
+
+    selected_model_type = st.selectbox(
+        "Sınıflandırma Motoru",
+        options=["svm", "rf"],
+        format_func=lambda x: "Linear SVM (Destek Vektör Makinesi)" if x == "svm" else "Random Forest (Rastgele Orman)",
+        index=0,
+    )
+
+    st.markdown("---")
+    st.markdown("### 📚 Külliyat ve Dönem Kapsamı")
+
+# Modeli Eğit / Yükle
+clf, atlas_info, X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test = initialize_universal_atlas(
+    model_type=selected_model_type,
+    chunk_size=90,
+    overlap=35,
+)
+
+with st.sidebar:
+    st.write(f"• **Kapsanan Dönem Sayısı:** `{atlas_info['total_eras']}` Edebi Dönem")
+    st.write(f"• **Kanonik Yazar Sayısı:** `{atlas_info['total_authors']}` Yazar")
+    st.write(f"• **Toplam Örnek Blok:** `{atlas_info['total_samples']}` Metin Bloğu")
+    st.write(f"• **Stilometrik Boyut:** `{atlas_info['feature_count']}` Öznitelik")
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; color: #475569; font-size: 0.8rem; font-weight: 600;">
+            🚀 <b>Developed by Bayram Akpamukçu</b><br>
+            TÜBİTAK 2209 / Computational Literary Studies
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ==============================================================================
+# DÖRT ANA SEKME (TABS)
+# ==============================================================================
+tab_prediction, tab_catalog, tab_comparison, tab_performance = st.tabs([
+    "🔍 Sekme 1: Canlı Yazar & Dönem Tespiti",
+    "📖 Sekme 2: Edebiyat Tarihi & Külliyat Gezgini",
+    "⚖️ Sekme 3: Üslup Evrimi & Yazar Karşılaştırma",
+    "📊 Sekme 4: Model Performansı & Birim Testler",
+])
+
+
+# ------------------------------------------------------------------------------
+# SEKME 1: CANLI YAZAR & DÖNEM TESPİTİ
+# ------------------------------------------------------------------------------
+with tab_prediction:
+    st.markdown("### ✍️ Bilinmeyen / Anonim Bir Edebi Metin Giriniz")
+    st.markdown(
+        "Aşağıdaki alana İngiliz veya Amerikan edebiyatından bir pasaj yapıştırın "
+        "veya hazır test pasajlarından birini seçerek analizi başlatın."
+    )
+
+    col_pick, col_era_filter = st.columns([3, 2])
+    with col_pick:
+        chosen_sample = st.selectbox(
+            "Hazır Kanonik Test Pasajı Seçin:",
+            options=list(PRELOADED_PASSAGES.keys()),
+            index=0,
+        )
+    with col_era_filter:
+        era_constraint = st.selectbox(
+            "Dönem Kısıtı (Opsiyonel):",
+            options=["Tüm Dönemler (Otomatik Katman 1)"] + LITERARY_ERAS,
+            index=0,
+            help="İsterseniz tahmin Katman 2'de yalnızca seçtiğiniz dönemin yazarları arasında sınırlandırılır.",
+        )
+
+    use_hierarchical = st.checkbox(
+        "🧠 Hiyerarşik Dönem Filtresi (Hierarchical Conditioning)",
+        value=True,
+        help="Açık olduğunda Katman 1 edebi dönem olasılıkları ve Burrows' Delta yakınlığı Katman 2 yazar olasılıklarıyla birleştirilerek anakronik (yüzyıl dışı) sapmalar engellenir.",
+    )
+
+    initial_input = PRELOADED_PASSAGES[chosen_sample] if chosen_sample != "Seçiniz (Hazır Kanonik Test Pasajı)" else ""
+
+    text_input = st.text_area(
+        "Analiz Edilecek Edebi Metin:",
+        value=initial_input,
+        height=160,
+        placeholder="Örn: To be, or not to be, that is the question: whether 'tis nobler in the mind to suffer...",
+    )
+
+    run_btn = st.button("🚀 Çift Katmanlı Analizi ve Burrows' Delta'yı Çalıştır", type="primary", use_container_width=True)
+
+    if run_btn:
+        if not text_input.strip():
+            st.warning("⚠️ Lütfen analiz edilmesi için en az bir cümlelik bir edebi metin giriniz.")
+        else:
+            with st.spinner("Katman 1 (Dönem) ve Katman 2 (Yazar) sınıflandırıcıları çalışıyor, Burrows' Delta hesaplanıyor..."):
+                # 1. Katman 1: Edebi Dönem Tahmini
+                predicted_era, era_probabilities = clf.predict_era(text_input)
+                era_conf = era_probabilities.get(predicted_era, 1.0)
+
+                # 2. Katman 2: Yazar Tahmini (Top-5 Adaylar)
+                active_filter = None if era_constraint.startswith("Tüm") else era_constraint
+                top_authors = clf.predict_top_authors(
+                    text_input,
+                    era_filter=active_filter,
+                    top_k=5,
+                    use_hierarchical=use_hierarchical,
+                )
+                best_author, best_author_prob = top_authors[0]
+
+                # 3. Burrows' Delta Z-Skor Mesafesi
+                delta_results = clf.compute_burrows_delta(text_input, top_k=5)
+
+                # 4. Anlık Metrik Röntgeni
+                extractor = StylometricFeatureExtractor()
+                text_metrics = extractor.extract_features(text_input)
+
+            hierarchical_badge = (
+                '<span style="background: rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 8px;">🧠 Hiyerarşik Koşullandırma: AKTİF</span>'
+                if use_hierarchical else
+                '<span style="background: rgba(148, 163, 184, 0.2); color: #94a3b8; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 8px;">Ham Tekil Model (Filtresiz)</span>'
+            )
+
+            # Büyük İkili Tahmin Kartı
+            st.markdown(
+                f"""
+                <div class="prediction-card">
+                    <div class="era-title">🏛️ KATMAN 1 (EDEBİ DÖNEM): {predicted_era.upper()} (%{era_conf*100:.1f} Güven)</div>
+                    <div style="font-size: 1.1rem; opacity: 0.9; margin-top: 6px;">KATMAN 2 (EN GÜÇLÜ YAZAR ADAYI) {hierarchical_badge}</div>
+                    <div class="prediction-title">✍️ {best_author}</div>
+                    <div style="font-size: 1.05rem; opacity: 0.95;">Model Olasılığı: %{best_author_prob*100:.1f}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # İki Kolonlu Detay Analiz
+            col_left, col_right = st.columns([1.1, 1], gap="medium")
+
+            with col_left:
+                st.markdown("#### 🎯 En Olası 5 Yazar Adayı (Top-5 Authors)")
+                top_authors_dict = {auth: prob for auth, prob in top_authors}
+                fig_probs = plot_probability_bars(top_authors_dict)
+                st.pyplot(fig_probs)
+                plt.close(fig_probs)
+
+                st.markdown("#### 📐 Burrows' Delta Z-Skor Mesafesi (Altın Standart)")
+                st.caption("Daha düşük delta mesafesi = Metne üslupça en yakın yazar.")
+                delta_df = pd.DataFrame(
+                    delta_results,
+                    columns=["Yazar", "Burrows' Delta Mesafesi", "Benzerlik İndeksi (%)"]
+                )
+                st.dataframe(delta_df, use_container_width=True, hide_index=True)
+
+            with col_right:
+                st.markdown("#### 🔬 Metnin Edebi & Kronolojik Röntgeni")
+                k1, k2 = st.columns(2)
+                with k1:
+                    st.metric("Arkaik Sözcük Oranı", f"%{text_metrics['archaic_total_ratio']*100:.2f}",
+                              help="thou, thee, hath, doth, 'tis gibi arkaik kelimelerin toplam kelimelere oranı.")
+                    st.metric("-eth / -est Arkaik Fiil", f"%{(text_metrics['suffix_eth_ratio']+text_metrics['suffix_est_ratio'])*100:.2f}",
+                              help="Rönesans ve Orta Çağ fiil çekimleri.")
+                    st.metric("Bilinç Akışı İndeksi", f"{text_metrics['stream_of_consciousness_index']:.2f}",
+                              help="Tire, üç nokta ve cümle varyansı kombinasyonu (Modernizm göstergesi).")
+                with k2:
+                    st.metric("Sözcük Çeşitliliği (TTR)", f"{text_metrics['ttr']:.3f}",
+                              help="Vocabulary Richness (Benzersiz kelime / Toplam kelime).")
+                    st.metric("-ly Zarf Yoğunluğu", f"%{text_metrics['suffix_ly_ratio']*100:.2f}",
+                              help="Viktorya ve Romantizm dönemi betimleme göstergesi.")
+                    st.metric("Ortalama Cümle Uzunluğu", f"{text_metrics['avg_sentence_length_words']:.1f} kelime")
+
+                st.info(
+                    f"💡 **NLP Değerlendirmesi:** Metin toplam **{int(text_metrics['total_tokens'])}** kelime "
+                    f"ve **{int(text_metrics['total_sentences'])}** cümledir. "
+                    f"Burrows' Delta mesafesine göre metin en çok **{delta_results[0][0]}** üslubuna yaklaşmaktadır "
+                    f"(Delta: {delta_results[0][1]})."
+                )
+
+
+# ------------------------------------------------------------------------------
+# SEKME 2: EDEBİYAT TARİHİ & KÜLLİYAT GEZGİNİ
+# ------------------------------------------------------------------------------
+with tab_catalog:
+    st.markdown("### 📚 7 Edebi Dönem ve 37 Kanonik Yazar Kataloğu")
+    st.markdown(
+        "Bu atlas, İngiliz ve Amerikan edebiyatının Orta Çağ'dan 20. yüzyıl ortasına kadar uzanan "
+        "en kapsamlı stilometri külliyatlarından biridir. Her yazarın Project Gutenberg kayıtları ve "
+        "temsil ettiği üslup özellikleri aşağıda listelenmiştir."
+    )
+
+    filter_era = st.selectbox(
+        "Döneme Göre Filtrele:",
+        options=["Tüm Dönemleri Göster"] + LITERARY_ERAS,
+        index=0,
+    )
+
+    catalog_rows = []
+    for auth_id, entry in CANON_CATALOG.items():
+        if filter_era != "Tüm Dönemleri Göster" and entry.era != filter_era:
+            continue
+        catalog_rows.append({
+            "Yazar": entry.name,
+            "Edebi Dönem": entry.era,
+            "Yüzyıl / Tarih": entry.century_span,
+            "Kanonik Eser": entry.canonical_work,
+            "Gutenberg ID": entry.gutenberg_id,
+            "Üslup Karakteristiği": entry.stylistic_profile,
+        })
+
+    df_catalog = pd.DataFrame(catalog_rows)
+    st.dataframe(df_catalog, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.markdown("#### 🔄 Project Gutenberg Canlı Senkronizasyon Aracı")
+    col_sync_btn, col_sync_info = st.columns([1, 2])
+    with col_sync_btn:
+        sync_btn = st.button("🌐 Gutenberg Tam Metinlerini Eşitle (İsteğe Bağlı)")
+    with col_sync_info:
+        st.caption(
+            "Varsayılan olarak sistem, çevrimdışı yüksek doğruluklu yerleşik pasaj külliyatını kullanır. "
+            "Butona tıklandığında çevrimiçi Gutenberg kütüphanesinden tam metinler taranır."
+        )
+
+    if sync_btn:
+        with st.spinner("Gutenberg arşivine bağlanılıyor ve metinler güncelleniyor..."):
+            data_dir = Path(__file__).resolve().parent / "data" / "raw"
+            # 2 örnek yazar için deneme senkronizasyonu
+            sample_entry = CANON_CATALOG["shakespeare"]
+            p = sync_author_corpus(data_dir, sample_entry, try_download=True)
+            st.success(f"✓ Gutenberg eşitlemesi tamamlandı. Külliyat yolu: `{p.name}`")
+
+
+# ------------------------------------------------------------------------------
+# SEKME 3: ÜSLUP EVRİMİ & YAZAR KARŞILAŞTIRMA
+# ------------------------------------------------------------------------------
+with tab_comparison:
+    st.markdown("### ⚖️ İki Kanonik Yazarın Üslup Karşılaştırması")
+    st.markdown(
+        "Farklı veya aynı dönemden iki yazar seçerek sözdizimsel, morfolojik ve arkaik "
+        "özniteliklerini yan yana karşılaştırın (Örn: *Shakespeare vs. Marlowe* veya *Dickens vs. Hemingway*)."
+    )
+
+    all_author_names = sorted(list(set(atlas_info["authors_list"])))
+    col_a1, col_a2 = st.columns(2)
+    with col_a1:
+        author1 = st.selectbox("1. Yazar:", options=all_author_names, index=all_author_names.index("William Shakespeare") if "William Shakespeare" in all_author_names else 0)
+    with col_a2:
+        default_idx2 = all_author_names.index("Ernest Hemingway") if "Ernest Hemingway" in all_author_names else 1
+        author2 = st.selectbox("2. Yazar:", options=all_author_names, index=default_idx2)
+
+    # İki yazarın ortalama özniteliklerini hesapla
+    feat_extractor = StylometricFeatureExtractor()
+    auth1_entry = next((e for e in CANON_CATALOG.values() if e.name == author1), None)
+    auth2_entry = next((e for e in CANON_CATALOG.values() if e.name == author2), None)
+
+    if auth1_entry and auth2_entry:
+        text1 = " ".join(auth1_entry.sample_passages)
+        text2 = " ".join(auth2_entry.sample_passages)
+
+        f1 = feat_extractor.extract_features(text1)
+        f2 = feat_extractor.extract_features(text2)
+
+        fig_comp = plot_author_stylistic_comparison(
+            author1_name=author1,
+            features1=f1,
+            author2_name=author2,
+            features2=f2,
+            title=f"Stilometri Karşılaştırması: {author1} vs. {author2}",
+        )
+        st.pyplot(fig_comp)
+        plt.close(fig_comp)
+
+        # Karşılaştırmalı Tablo
+        st.markdown("#### 📋 Sayısal Göstergeler Tablosu")
+        comp_data = [
+            {"Metrik": "Edebi Dönem", author1: auth1_entry.era, author2: auth2_entry.era},
+            {"Metrik": "Ortalama Cümle Uzunluğu (Kelime)", author1: f"{f1['avg_sentence_length_words']:.1f}", author2: f"{f2['avg_sentence_length_words']:.1f}"},
+            {"Metrik": "Sözcük Çeşitliliği (TTR)", author1: f"{f1['ttr']:.3f}", author2: f"{f2['ttr']:.3f}"},
+            {"Metrik": "Arkaik Sözcük Oranı", author1: f"%{f1['archaic_total_ratio']*100:.2f}", author2: f"%{f2['archaic_total_ratio']*100:.2f}"},
+            {"Metrik": "-ly Zarf Yoğunluğu", author1: f"%{f1['suffix_ly_ratio']*100:.2f}", author2: f"%{f2['suffix_ly_ratio']*100:.2f}"},
+            {"Metrik": "-ing Süreklilik Oranı", author1: f"%{f1['suffix_ing_ratio']*100:.2f}", author2: f"%{f2['suffix_ing_ratio']*100:.2f}"},
+            {"Metrik": "Bilinç Akışı İndeksi", author1: f"{f1['stream_of_consciousness_index']:.2f}", author2: f"{f2['stream_of_consciousness_index']:.2f}"},
+            {"Metrik": "Noktalı Virgül (;) Oranı", author1: f"{f1['punct_semicolon_ratio']:.3f}", author2: f"{f2['punct_semicolon_ratio']:.3f}"},
+        ]
+        st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True)
+
+
+# ------------------------------------------------------------------------------
+# SEKME 4: MODEL PERFORMANSI & BİRİM TESTLER
+# ------------------------------------------------------------------------------
+with tab_performance:
+    st.markdown("### 📊 Çift Katmanlı Model Performansı ve QA Doğrulaması")
+
+    # Üst KPI Kartları
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(
+            f"""
+            <div class="kpi-card">
+                <div class="kpi-val">%{atlas_info['era_cv']['mean_accuracy']*100:.1f}</div>
+                <div class="kpi-lbl">Katman 1 (Dönem) CV Doğruluğu</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            f"""
+            <div class="kpi-card">
+                <div class="kpi-val">%{atlas_info['eval_results']['accuracy']*100:.1f}</div>
+                <div class="kpi-lbl">Katman 2 (Yazar) Test Doğruluğu</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c3:
+        st.markdown(
+            f"""
+            <div class="kpi-card">
+                <div class="kpi-val">{atlas_info['author_cv']['mean_f1_macro']:.3f}</div>
+                <div class="kpi-lbl">Katman 2 Macro F1 Skoru</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c4:
+        st.markdown(
+            f"""
+            <div class="kpi-card">
+                <div class="kpi-val">{atlas_info['feature_count']}</div>
+                <div class="kpi-lbl">Toplam Stilometrik Boyut</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+
+    col_cm, col_imp = st.columns([1, 1], gap="medium")
+    with col_cm:
+        st.markdown("#### 🧩 Katman 2 Karmaşıklık Matrisi (Seaborn Heatmap)")
+        y_test_pred = clf.pipeline.predict(X_test)
+        fig_cm = plot_confusion_matrix(
+            y_true=y_auth_test,
+            y_pred=y_test_pred,
+            classes=sorted(list(set(y_auth_test))),
+            title="Kanonik Yazarlar Test Kümesi Karmaşıklık Matrisi",
+        )
+        st.pyplot(fig_cm)
+        plt.close(fig_cm)
+
+    with col_imp:
+        st.markdown("#### 🏆 Yazarları En Çok Ayırt Eden 12 Öznitelik")
+        df_imp = clf.get_feature_importances(top_n=12)
+        fig_imp = plot_feature_importance(df_imp, top_n=12, title="En Ayırt Edici Göstergeler (|SVM Katsayısı|)")
+        st.pyplot(fig_imp)
+        plt.close(fig_imp)
+
+    st.markdown("---")
+    st.markdown("#### 🧪 TÜBİTAK Birim Testleri Doğrulama Konsolu")
+    test_run_btn = st.button("Birim Testleri Doğrudan Çalıştır (tests/ Suite)")
+    if test_run_btn:
+        with st.spinner("unittest discover -s tests çalıştırılıyor..."):
+            loader = unittest.TestLoader()
+            suite = loader.discover("tests")
+            runner = unittest.TextTestRunner(verbosity=2)
+            result = runner.run(suite)
+            if result.wasSuccessful():
+                st.success(f"✓ TÜM BİRİM TESTLER BAŞARIYLA GEÇTİ! ({result.testsRun} test çalıştırıldı, 0 hata, 0 başarısızlık).")
+            else:
+                st.error(f"Testler tamamlandı: {len(result.failures)} başarısızlık, {len(result.errors)} hata.")
+
+# ==============================================================================
+# Sayfa Altbilgisi (Footer)
+# ==============================================================================
+st.markdown(
+    """
+    <div class="dev-footer">
+        🏛️ Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
