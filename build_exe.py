@@ -105,6 +105,16 @@ def build_executable(onefile: bool = False) -> Path:
         "--hidden-import=src.visualizer",
         "--hidden-import=src.canon_catalog",
         "--hidden-import=src.gutenberg_fetcher",
+        "--hidden-import=src.advanced_forensics",
+        "--hidden-import=src.literary_network",
+        "--hidden-import=src.prosody_atmosphere",
+        "--hidden-import=src.style_coach",
+        "--hidden-import=src.academic_exporter",
+        "--hidden-import=scipy",
+        "--hidden-import=scipy.cluster",
+        "--hidden-import=scipy.cluster.hierarchy",
+        "--hidden-import=scipy.spatial",
+        "--hidden-import=scipy.spatial.distance",
     ]
 
     if onefile:

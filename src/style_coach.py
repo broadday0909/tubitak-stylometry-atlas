@@ -47,6 +47,8 @@ class StylometricCoach:
         "punct_total_ratio": "Toplam Noktalama İşareti Oranı",
         "dialogue_quote_ratio": "Doğrudan Diyalog (Tırnak) Yoğunluğu",
         "stream_of_consciousness_index": "Bilinç Akışı İndeksi (Modernizm)",
+        "political_lexicon_ratio": "Politik / Sosyal Eleştiri Sözcük Oranı",
+        "clarity_directness_index": "Orwellian Doğrudanlık & Saydamlık İndeksi",
         "sentence_length_variance_cv": "Cümle Boyutu Varyasyon Katsayısı (CV)",
         "fw_total_ratio": "Toplam İşlevsel Kelime Oranı",
     }

@@ -293,8 +293,14 @@ def main() -> None:
     print(f"   {len(df_X)} Örnek Blok, {df_X.shape[1]} Stilometrik Boyut, Toplam {len(csv_text.encode('utf-8')) / 1024:.1f} KB CSV üretildi.")
 
     # 3. Çoklu Dosya Toplu Taraması (Batch File Analysis)
+    orwell_1984_sample = (
+        "It was a bright cold day in April, and the clocks were striking thirteen. "
+        "Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, "
+        "slipped quickly through the glass doors of Victory Mansions, though not quickly enough "
+        "to prevent a swirl of gritty dust from entering along with him."
+    )
     mock_files = {
-        "orwell_1984_draft.txt": blind_tests[6][3],
+        "orwell_1984_draft.txt": orwell_1984_sample,
         "shakespeare_soliloquy.txt": blind_tests[1][3],
         "dickens_tale_cities.txt": blind_tests[4][3],
     }
@@ -306,7 +312,7 @@ def main() -> None:
     ]
     print(tabulate(batch_table, headers=["Dosya Adı", "Kelime", "Tahmin Dönem", "Dönem Güveni", "Tahmin Yazar", "Yazar Güveni"], tablefmt="fancy_grid"))
 
-    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 12) boru hattı kusursuz çalıştı.")
+    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 13 - Final) boru hattı kusursuz çalıştı.")
 
 
 if __name__ == "__main__":

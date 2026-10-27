@@ -112,6 +112,27 @@ class TestAcademicExporter(unittest.TestCase):
         self.assertEqual(df_batch.iloc[1]["Dosya Adı"], "dickens_intro.md")
         self.assertGreater(df_batch.iloc[0]["Kelime Sayısı"], 10)
 
+    def test_orwell_vs_woolf_batch_distinction(self):
+        """Modernist yazarlar George Orwell ve Virginia Woolf'un ayırt edildiğini test et."""
+        orwell_text = (
+            "It was a bright cold day in April, and the clocks were striking thirteen. "
+            "Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, "
+            "slipped quickly through the glass doors of Victory Mansions."
+        )
+        woolf_text = (
+            "Mrs. Dalloway said she would buy the flowers herself. For Lucy had her work cut out for her. "
+            "And then, thought Clarissa Dalloway, what a morning—fresh as if issued to children on a beach. "
+            "What a lark! What a plunge!"
+        )
+
+        orwell_feats = self.extractor.extract_features(orwell_text)
+        woolf_feats = self.extractor.extract_features(woolf_text)
+
+        # Orwell doğrudan ve saydam sentaks, Woolf ise parçalanmış/lirik sentaks sergilemelidir
+        self.assertGreater(orwell_feats["clarity_directness_index"], woolf_feats["clarity_directness_index"])
+        self.assertGreater(woolf_feats["stream_of_consciousness_index"], orwell_feats["stream_of_consciousness_index"])
+        self.assertGreater(orwell_feats["political_lexicon_ratio"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

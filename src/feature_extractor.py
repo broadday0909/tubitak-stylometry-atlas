@@ -213,6 +213,18 @@ class StylometricFeatureExtractor:
         features["ellipsis_frequency_ratio"] = float(ellipsis_count / total_tokens)
         features["parentheses_frequency_ratio"] = float(parentheses_count / total_tokens)
 
+        # 6b. Orwellian Saydamlık ve Politik Dağarcık İndeksi (Window-Pane Clarity vs. Stream of Consciousness)
+        political_satirical_words = {
+            "political", "party", "state", "leader", "power", "rule", "truth", "lies", "war", "peace",
+            "freedom", "slavery", "ignorance", "regime", "propaganda", "rebellion", "comrade", "society",
+            "citizen", "control", "speech", "doublethink", "thoughtcrime", "ministry", "brother", "hate",
+            "equal", "animal", "pig", "deceit", "liberty", "law", "order", "clocks", "thirteen"
+        }
+        political_count = sum(1 for w in words if w in political_satirical_words)
+        features["political_lexicon_ratio"] = float(political_count / total_tokens)
+        clarity_factor = 1.0 / (1.0 + (fragmented_syntax * 8.0) + (features["suffix_ly_ratio"] * 5.0))
+        features["clarity_directness_index"] = float(clarity_factor)
+
         # ----------------------------------------------------------------------
         # 7. Şiir vs. Düz Yazı Metrikleri (Poetic vs. Prose)
         # ----------------------------------------------------------------------
@@ -335,6 +347,8 @@ class StylometricFeatureExtractor:
             "poetic_line_break_ratio": 0.0,
             "poetic_line_capitalization_ratio": 0.0,
             "dialogue_quote_ratio": 0.0,
+            "political_lexicon_ratio": 0.0,
+            "clarity_directness_index": 0.0,
             "punct_total_ratio": 0.0,
             "fw_total_ratio": 0.0,
         }

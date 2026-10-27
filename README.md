@@ -8,12 +8,12 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-48%2F48%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-49%2F49%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
   <b>Hesaplamalı Edebiyat (Computational Literary Studies) ve Doğal Dil İşleme (NLP) Altyapısı</b><br>
-  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi • Edebi Soy Ağacı • Prosodi & 6D Atmosfer Radarı • Üslup Dönüşüm Reçetesi & Yazar Koçu • Dosya Sürükle-Bırak & LaTeX/CSV İhracı
+  7 Edebi Dönem • 37 Kanonik Yazar • 138 Stilometrik Boyut • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi • Edebi Soy Ağacı • Prosodi & 6D Atmosfer Radarı • Üslup Dönüşüm Reçetesi & Yazar Koçu • Dosya Sürükle-Bırak & LaTeX/CSV İhracı • TÜBİTAK 2209-A Resmi Raporu
 </p>
 
 </div>
@@ -22,9 +22,26 @@
 
 ## 📌 Proje Genel Bakışı
 
-Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)**, **2B üslup galaksisi (PCA Galaxy)**, **filogenetik edebi soy ağacı (Phylogenetic Dendrogram)**, **prosodi / edebi atmosfer radarı (Spider Chart)**, **üslup dönüşüm reçetesi / yazar koçluğu (Stylometric Prescription & Coaching)** ve **akademik veri ihracı / toplu dosya analizi (Academic LaTeX/CSV Export & Batch Analysis)** modellerini bir araya getiren kapsamlı bir yapay zekâ sistemidir.
+Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**138 stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)**, **2B üslup galaksisi (PCA Galaxy)**, **filogenetik edebi soy ağacı (Phylogenetic Dendrogram)**, **prosodi / edebi atmosfer radarı (Spider Chart)**, **üslup dönüşüm reçetesi / yazar koçluğu (Stylometric Prescription & Coaching)** ve **akademik veri ihracı / toplu dosya analizi (Academic LaTeX/CSV Export & Batch Analysis)** modellerini bir araya getiren kapsamlı bir yapay zekâ sistemidir.
 
 TÜBİTAK standartlarına uygun olarak tasarlanan mimari, Geoffrey Chaucer'ın Orta Çağ İngilizcesinden Virginia Woolf ve James Joyce'un Modernist bilinç akışına uzanan **600 yıllık İngiliz ve Amerikan edebiyatı tarihini** 7 ana edebi dönem ve 37 kanonik yazar üzerinden modeller.
+
+---
+
+## 🌟 Aşama 13 Öne Çıkan Başarılar (Kısa Metin Kalibrasyonu, TÜBİTAK 2209-A Tam Raporu & v2.0 .EXE)
+
+1. **Modernist Dönem İçi Kısa Metin Kalibrasyonu (%100 3/3 Tam İsabet):**
+   * George Orwell'in doğrudan, duru anlatımı (*Window-Pane Clarity*) ile Virginia Woolf'un lirik, parçalanmış bilinç akışı (*Stream of Consciousness*) arasındaki yapısal farklar `clarity_directness_index` ve `political_lexicon_ratio` öznitelikleriyle güçlendirildi.
+   * Çoklu dosya toplu analizinde üç zorlu kör test dosyasında %100 tam isabet sağlandı:
+     * `orwell_1984_draft.txt` $\rightarrow$ **Modernism / George Orwell (✓)**
+     * `shakespeare_soliloquy.txt` $\rightarrow$ **Renaissance & Early Modern / William Shakespeare (✓)**
+     * `dickens_tale_cities.txt` $\rightarrow$ **Victorian Era / Charles Dickens (✓)**
+2. **Resmi TÜBİTAK 2209-A Proje Araştırma Raporu:**
+   * [`docs/TUBITAK_2209A_Proje_Raporu_Bayram_Akpamukcu.md`](file:///c:/kod/tubitak/docs/TUBITAK_2209A_Proje_Raporu_Bayram_Akpamukcu.md) konumunda TÜBİTAK resmi şablonuna birebir uygun, 7 ana bölümden oluşan (Özet, Özgün Değer, Hipotezler, Yöntem, İş-Zaman Çizelgesi, Risk Yönetimi, Yaygın Etki) kapsamlı başvuru dokümanı hazırlandı.
+3. **v2.0 Çalıştırılabilir Masaüstü Uygulaması (`StylometryAtlas_BayramAkpamukcu.exe`):**
+   * 12 aşamanın ve 7 etkileşimli sekmenin tamamını (`advanced_forensics`, `literary_network`, `prosody_atmosphere`, `style_coach`, `academic_exporter`, `scipy`) paketleyen güncel v2.0 `.exe` başarıyla derlendi.
+4. **49/49 Birim Testi Başarısı:**
+   * Test süiti 49 birim testine çıkarıldı ve %100 doğrulukla çalışmaktadır.
 
 ---
 
