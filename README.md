@@ -8,12 +8,12 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-35%2F35%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-42%2F42%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
   <b>Hesaplamalı Edebiyat (Computational Literary Studies) ve Doğal Dil İşleme (NLP) Altyapısı</b><br>
-  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi • Edebi Soy Ağacı & Etki Ağı
+  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi • Edebi Soy Ağacı • Prosodi & 6D Atmosfer Radarı
 </p>
 
 </div>
@@ -22,9 +22,28 @@
 
 ## 📌 Proje Genel Bakışı
 
-Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)**, **2B üslup galaksisi (PCA Galaxy)** ve **filogenetik edebi soy ağacı (Phylogenetic Dendrogram)** modellerini bir araya getiren kapsamlı bir yapay zekâ sistemidir.
+Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)**, **2B üslup galaksisi (PCA Galaxy)**, **filogenetik edebi soy ağacı (Phylogenetic Dendrogram)** ve **prosodi / edebi atmosfer radarı (Spider Chart)** modellerini bir araya getiren kapsamlı bir yapay zekâ sistemidir.
 
 TÜBİTAK standartlarına uygun olarak tasarlanan mimari, Geoffrey Chaucer'ın Orta Çağ İngilizcesinden Virginia Woolf ve James Joyce'un Modernist bilinç akışına uzanan **600 yıllık İngiliz ve Amerikan edebiyatı tarihini** 7 ana edebi dönem ve 37 kanonik yazar üzerinden modeller.
+
+---
+
+## 🌟 Aşama 10 Öne Çıkan Yenilikler (Prosodi & 6 Boyutlu Edebi Atmosfer Radarı)
+
+1. **İngiliz Edebiyatı Prosodi ve Vezin Analizi:**
+   * Kural tabanlı hızlı hece sayacı (`count_syllables`), ortalama hece/dize oranı, Shakespeare ve Milton'a özgü 10 heceli **Blank Verse / Iambic Pentameter** eğilim yüzdesi ve ritmik düzenlilik indeksini hesaplar.
+2. **6 Boyutlu Edebi Atmosfer Radarı (Spider / Polar Chart):**
+   * Metinleri 6 kanonik edebi atmosfer sözlüğüne göre doygunluk eğrisiyle (0-100) puanlar:
+     * **Gothic & Macabre** (Poe, Mary Shelley, Stoker)
+     * **Romantic & Pastoral Sublime** (Wordsworth, Keats, Blake)
+     * **Courtly & Archaic Majesty** (Shakespeare, Marlowe, Milton)
+     * **Satirical & Political Sharpness** (Swift, Orwell)
+     * **Victorian Social Realism** (Dickens, Austen, Eliot)
+     * **Modernist Psychological Flux** (Woolf, Joyce)
+3. **Tekil ve Karşılaştırmalı Radar Görselleştirmeleri:**
+   * Canlı testte metnin atmosfer haritasını, Yazar Karşılaştırma sekmesinde ise iki kanonik yazarın atmosfer poligonlarını üst üste bindirerek görselleştirir.
+4. **Kapsamlı Test Doğrulaması:**
+   * 42 birim testinden oluşan test süiti `%100 OK` doğrulukla çalışmaktadır.
 
 ---
 

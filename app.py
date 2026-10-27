@@ -33,7 +33,9 @@ from src.corpus_builder import build_hierarchical_stylometry_dataset
 from src.feature_extractor import StylometricFeatureExtractor
 from src.gutenberg_fetcher import load_universal_canon_corpus, sync_author_corpus
 from src.literary_network import LiteraryPhylogenyEngine
+from src.prosody_atmosphere import ProsodyAndAtmosphereAnalyzer
 from src.visualizer import (
+    plot_atmosphere_radar,
     plot_author_distance_heatmap,
     plot_author_stylistic_comparison,
     plot_confusion_matrix,
@@ -557,6 +559,55 @@ with tab_prediction:
                         "resmi imzasıyla belgelendirir."
                     )
 
+                # 6. Prosodi & Hece Ritmi ve 6 Boyutlu Edebi Atmosfer Radarı
+                prosody_analyzer = ProsodyAndAtmosphereAnalyzer()
+                meter_info = prosody_analyzer.analyze_poetic_meter(text_input)
+                atmosphere_scores = prosody_analyzer.analyze_literary_atmosphere(text_input)
+
+                st.markdown("---")
+                st.markdown("### 🕸️ 6 Boyutlu Edebi Atmosfer Radarı & Prosodi Analizi")
+
+                col_rad, col_pros = st.columns([1.1, 1], gap="medium")
+                with col_rad:
+                    st.markdown("#### 🧭 Edebi Atmosfer Radarı (Spider Chart)")
+                    fig_radar = plot_atmosphere_radar(
+                        atmosphere_scores,
+                        title=f"Metnin Edebi Atmosfer Profili ({best_author} Eşleşmesi)",
+                        label1="Test Metni",
+                    )
+                    st.pyplot(fig_radar)
+                    plt.close(fig_radar)
+
+                with col_pros:
+                    st.markdown("#### 🎭 Prosodi, Vezin & Hece Ritmi")
+                    st.markdown(
+                        f"""
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 12px;">
+                            <div style="font-size: 0.82rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Tespit Edilen Vezin Eğilimi</div>
+                            <div style="font-size: 1.05rem; font-weight: 800; color: #1e293b; margin-top: 4px;">{meter_info['poetic_form_tendency']}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    p1, p2 = st.columns(2)
+                    with p1:
+                        st.metric("Toplam Hece Sayısı", f"{meter_info['total_syllables']}")
+                        st.metric("10 Hece (Blank Verse) %", f"%{meter_info['iambic_pentameter_pct']:.1f}",
+                                  help="Shakespeare ve Milton blank verse dizeleri ~10 hece (Iambic Pentameter) kalıbındadır.")
+                    with p2:
+                        st.metric("Ortalama Hece / Dize", f"{meter_info['avg_syllables_per_line']:.1f}")
+                        st.metric("Ritim Düzenlilik İndeksi", f"{meter_info['meter_regularity_index']:.1f}",
+                                  help="Hece varyasyonuna göre metnin ritmik kararlılığı (0-100).")
+
+                    # Atmosfer Dağılımı Tablosu
+                    st.markdown("##### 📊 6 Atmosfer Boyutu Puanları")
+                    df_atmos = pd.DataFrame([
+                        {"Atmosfer Boyutu": k, "Puan": f"%{v:.1f}"}
+                        for k, v in atmosphere_scores.items()
+                    ])
+                    st.dataframe(df_atmos, use_container_width=True, hide_index=True)
+
 
 # ------------------------------------------------------------------------------
 # SEKME 2: EDEBİYAT TARİHİ & KÜLLİYAT GEZGİNİ
@@ -664,6 +715,39 @@ with tab_comparison:
             {"Metrik": "Noktalı Virgül (;) Oranı", author1: f"{f1['punct_semicolon_ratio']:.3f}", author2: f"{f2['punct_semicolon_ratio']:.3f}"},
         ]
         st.dataframe(pd.DataFrame(comp_data), use_container_width=True, hide_index=True)
+
+        # 6 Boyutlu Edebi Atmosfer Karşılaştırma Radarı (Spider Chart)
+        prosody_comp = ProsodyAndAtmosphereAnalyzer()
+        atmos1 = prosody_comp.analyze_literary_atmosphere(text1)
+        atmos2 = prosody_comp.analyze_literary_atmosphere(text2)
+        meter1 = prosody_comp.analyze_poetic_meter(text1)
+        meter2 = prosody_comp.analyze_poetic_meter(text2)
+
+        st.markdown("---")
+        st.markdown("#### 🕸️ 6 Boyutlu Edebi Atmosfer Radarı Karşılaştırması (Spider Chart)")
+
+        col_c_rad, col_c_pros = st.columns([1.1, 1], gap="medium")
+        with col_c_rad:
+            fig_rad_comp = plot_atmosphere_radar(
+                atmosphere_scores=atmos1,
+                comparison_scores=atmos2,
+                label1=author1,
+                label2=author2,
+                title=f"Edebi Atmosfer Karşılaştırması: {author1} vs. {author2}",
+            )
+            st.pyplot(fig_rad_comp)
+            plt.close(fig_rad_comp)
+
+        with col_c_pros:
+            st.markdown("#### 🎭 Prosodi ve Hece Vezin Karşılaştırması")
+            pros_data = [
+                {"Metrik": "Vezin / Ritim Eğilimi", author1: meter1["poetic_form_tendency"], author2: meter2["poetic_form_tendency"]},
+                {"Metrik": "Ortalama Hece / Dize", author1: f"{meter1['avg_syllables_per_line']:.1f}", author2: f"{meter2['avg_syllables_per_line']:.1f}"},
+                {"Metrik": "10 Hece (Iambic Pentameter) %", author1: f"%{meter1['iambic_pentameter_pct']:.1f}", author2: f"%{meter2['iambic_pentameter_pct']:.1f}"},
+                {"Metrik": "Ritim Düzenlilik İndeksi", author1: f"{meter1['meter_regularity_index']:.1f}", author2: f"{meter2['meter_regularity_index']:.1f}"},
+                {"Metrik": "Baskın Edebi Atmosfer", author1: max(atmos1.items(), key=lambda x: x[1])[0], author2: max(atmos2.items(), key=lambda x: x[1])[0]},
+            ]
+            st.dataframe(pd.DataFrame(pros_data), use_container_width=True, hide_index=True)
 
 
 # ------------------------------------------------------------------------------

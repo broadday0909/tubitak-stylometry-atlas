@@ -606,3 +606,73 @@ def plot_author_distance_heatmap(
     return fig
 
 
+def plot_atmosphere_radar(
+    atmosphere_scores: Dict[str, float],
+    comparison_scores: Optional[Dict[str, float]] = None,
+    label1: str = "Metin / 1. Yazar",
+    label2: str = "2. Yazar",
+    title: str = "6 Boyutlu Edebi Atmosfer Radarı (Spider Chart)",
+) -> Figure:
+    """
+    6 edebi atmosfer boyutunu (Gothic, Romantic Sublime, Courtly Majesty,
+    Satirical Sharpness, Victorian Realism, Modernist Flux) şık bir
+    Radar / Örümcek Ağı Grafiği (Polar/Spider Chart) üzerinde görselleştirir.
+    
+    Args:
+        atmosphere_scores: 1. metin/yazar için 6 kategori puanları (0-100).
+        comparison_scores: Opsiyonel 2. yazar için 6 kategori puanları (karşılaştırma için).
+        label1: 1. veri etiketi.
+        label2: 2. veri etiketi.
+        title: Grafik başlığı.
+        
+    Returns:
+        Figure: Matplotlib Figure nesnesi.
+    """
+    categories = list(atmosphere_scores.keys())
+    N = len(categories)
+
+    angles = [n / float(N) * 2 * np.pi for n in range(N)]
+    angles += angles[:1]  # Çemberi kapat
+
+    vals1 = [atmosphere_scores.get(c, 0.0) for c in categories]
+    vals1 += vals1[:1]
+
+    fig, ax = plt.subplots(figsize=(7.5, 7.0), subplot_kw=dict(polar=True), dpi=120)
+
+    # 12 yönünden başla ve saat yönünde ilerle
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # Kategori etiketleri (Türkçe kısaltma/düzenleme ile)
+    display_categories = [c.replace(" & ", "\n& ") for c in categories]
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(display_categories, size=9.5, weight="bold", color="#1e293b")
+
+    # Yarıçap (r) ölçeği
+    ax.set_rlabel_position(15)
+    ax.set_yticks([25, 50, 75, 100])
+    ax.set_yticklabels(["%25", "%50", "%75", "%100"], color="#64748b", size=8)
+    ax.set_ylim(0, 105)
+
+    # 1. Metin / Yazar Çizimi
+    color1 = "#6366f1"  # İndigo
+    ax.plot(angles, vals1, color=color1, linewidth=2.4, linestyle="solid", label=label1, marker="o", markersize=5)
+    ax.fill(angles, vals1, color=color1, alpha=0.22)
+
+    # 2. Yazar Çizimi (Karşılaştırma varsa)
+    if comparison_scores:
+        vals2 = [comparison_scores.get(c, 0.0) for c in categories]
+        vals2 += vals2[:1]
+        color2 = "#e11d48"  # Gül kırmızısı
+        ax.plot(angles, vals2, color=color2, linewidth=2.4, linestyle="solid", label=label2, marker="s", markersize=5)
+        ax.fill(angles, vals2, color=color2, alpha=0.18)
+        ax.legend(loc="upper right", bbox_to_anchor=(1.25, 1.12), frameon=True, facecolor="#ffffff", edgecolor="#cbd5e1", fontsize=9.5)
+
+    ax.set_title(title, fontsize=12.5, weight="bold", pad=20, color="#0f172a")
+    ax.grid(True, linestyle="--", alpha=0.6, color="#cbd5e1")
+
+    fig.tight_layout()
+    return fig
+
+
+

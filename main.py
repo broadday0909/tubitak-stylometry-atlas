@@ -30,6 +30,7 @@ from src.corpus_builder import build_hierarchical_stylometry_dataset
 from src.feature_extractor import StylometricFeatureExtractor
 from src.gutenberg_fetcher import load_universal_canon_corpus
 from src.literary_network import LiteraryPhylogenyEngine
+from src.prosody_atmosphere import ProsodyAndAtmosphereAnalyzer
 
 
 def get_blind_era_and_author_passages() -> List[Tuple[str, str, str, str]]:
@@ -209,7 +210,39 @@ def main() -> None:
     ]
     print(tabulate(soul_table, headers=["#", "Üslup İkizi", "Dönemi", "Benzerlik", "Mesafe", "İlişki Türü"], tablefmt="fancy_grid"))
 
-    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 9) boru hattı kusursuz çalıştı.")
+    print("\n" + "=" * 95)
+    print(" [8] PROSODİ/VEZİN ANALİZİ & 6 BOYUTLU EDEBİ ATMOSFER RADARI (AŞAMA 10)")
+    print("=" * 95)
+    prosody = ProsodyAndAtmosphereAnalyzer()
+
+    # Shakespeare Hamlet Prosodisi
+    shak_sample = (
+        "To be, or not to be, that is the question:\n"
+        "Whether 'tis nobler in the mind to suffer\n"
+        "The slings and arrows of outrageous fortune,\n"
+        "Or to take arms against a sea of troubles,\n"
+        "And by opposing end them."
+    )
+    shak_meter = prosody.analyze_poetic_meter(shak_sample)
+    shak_atmos = prosody.analyze_literary_atmosphere(shak_sample)
+
+    print(f"\n-> Shakespeare Prosodi & Hece Analizi (Hamlet Tiradı):")
+    print(f"   Vezin Eğilimi : {shak_meter['poetic_form_tendency']}")
+    print(f"   Ortalama Hece : {shak_meter['avg_syllables_per_line']} hece/dize | 10 Hece (Blank Verse): %{shak_meter['iambic_pentameter_pct']}")
+    print(f"   Ritim Düzeni  : {shak_meter['meter_regularity_index']} / 100")
+
+    # Poe Gotik Atmosferi
+    poe_sample = blind_tests[5][3]
+    poe_atmos = prosody.analyze_literary_atmosphere(poe_sample)
+
+    print(f"\n-> 6 Boyutlu Edebi Atmosfer Profili Karşılaştırması (Shakespeare vs. Poe):")
+    atmos_table = [
+        [cat, f"%{shak_atmos.get(cat, 0.0):.1f}", f"%{poe_atmos.get(cat, 0.0):.1f}"]
+        for cat in prosody.ATMOSPHERE_LEXICONS.keys()
+    ]
+    print(tabulate(atmos_table, headers=["Atmosfer Boyutu", "Shakespeare", "Edgar Allan Poe"], tablefmt="fancy_grid"))
+
+    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 10) boru hattı kusursuz çalıştı.")
 
 
 if __name__ == "__main__":
