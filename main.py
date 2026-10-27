@@ -31,6 +31,7 @@ from src.feature_extractor import StylometricFeatureExtractor
 from src.gutenberg_fetcher import load_universal_canon_corpus
 from src.literary_network import LiteraryPhylogenyEngine
 from src.prosody_atmosphere import ProsodyAndAtmosphereAnalyzer
+from src.style_coach import StylometricCoach
 
 
 def get_blind_era_and_author_passages() -> List[Tuple[str, str, str, str]]:
@@ -242,8 +243,38 @@ def main() -> None:
     ]
     print(tabulate(atmos_table, headers=["Atmosfer Boyutu", "Shakespeare", "Edgar Allan Poe"], tablefmt="fancy_grid"))
 
-    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 10) boru hattı kusursuz çalıştı.")
+    print("\n" + "=" * 95)
+    print(" [9] ÜSLUP DÖNÜŞÜM REÇETESİ & YAZAR KOÇLUĞU (AŞAMA 11)")
+    print("=" * 95)
+    coach = StylometricCoach(classifier=clf, extractor=extractor)
+
+    # Hedef: George Orwell için Zarf Budama ve Yalınlık Testi
+    orwell_draft = (
+        "He walked slowly and cautiously down the utterly dark corridor, breathing deeply and extremely nervously. "
+        "The wind blew violently against the shattered window pane, fiercely shaking the fragile wooden frames. "
+        "He quietly whispered into the shadows, hoping desperately that someone would quickly answer."
+    )
+    coach_orwell = coach.compare_with_target_author(orwell_draft, "George Orwell")
+    rx_orwell = coach.generate_prescription(orwell_draft, "George Orwell")
+    markers_orwell = coach.highlight_stylistic_markers(orwell_draft)
+
+    print(f"\n-> Hedef Yazar: George Orwell (Uyum Skoru: %{coach_orwell['similarity_pct']} | Burrows' Delta: {coach_orwell['mean_delta_distance']})")
+    print(f"   Metin Röntgeni: {markers_orwell['total_words']} Kelime | {markers_orwell['adverb_count']} Adet '-ly' Zarfı: {markers_orwell['adverbs_ly']}")
+    print(f"\n-> En Büyük 5 Stilometrik Sapma (Z-Skor Farkları):")
+    dev_table = [
+        [d["friendly_name"], d["user_value"], d["target_value"], f"{'+' if d['z_diff']>0 else ''}{d['z_diff']}", d["direction"]]
+        for d in coach_orwell["top_deviations"]
+    ]
+    print(tabulate(dev_table, headers=["Öznitelik", "Kullanıcı", "Orwell", "ΔZ", "Gerekli Eylem"], tablefmt="fancy_grid"))
+
+    print(f"\n-> George Orwell Üslup Dönüşüm Reçetesi (Adım Adım Eylem Planı):")
+    for idx, rx in enumerate(rx_orwell, 1):
+        print(f"   [{idx}] [{rx['action']}] {rx['category']}: {rx['recommendation']}")
+        print(f"       -> Etki: {rx['impact']}")
+
+    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 11) boru hattı kusursuz çalıştı.")
 
 
 if __name__ == "__main__":
     main()
+

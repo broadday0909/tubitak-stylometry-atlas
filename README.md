@@ -8,12 +8,12 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-42%2F42%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-45%2F45%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
   <b>Hesaplamalı Edebiyat (Computational Literary Studies) ve Doğal Dil İşleme (NLP) Altyapısı</b><br>
-  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi • Edebi Soy Ağacı • Prosodi & 6D Atmosfer Radarı
+  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi • Edebi Soy Ağacı • Prosodi & 6D Atmosfer Radarı • Üslup Dönüşüm Reçetesi & Yazar Koçu
 </p>
 
 </div>
@@ -22,9 +22,28 @@
 
 ## 📌 Proje Genel Bakışı
 
-Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)**, **2B üslup galaksisi (PCA Galaxy)**, **filogenetik edebi soy ağacı (Phylogenetic Dendrogram)** ve **prosodi / edebi atmosfer radarı (Spider Chart)** modellerini bir araya getiren kapsamlı bir yapay zekâ sistemidir.
+Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)**, **2B üslup galaksisi (PCA Galaxy)**, **filogenetik edebi soy ağacı (Phylogenetic Dendrogram)**, **prosodi / edebi atmosfer radarı (Spider Chart)** ve **üslup dönüşüm reçetesi / yazar koçluğu (Stylometric Prescription & Coaching)** modellerini bir araya getiren kapsamlı bir yapay zekâ sistemidir.
 
 TÜBİTAK standartlarına uygun olarak tasarlanan mimari, Geoffrey Chaucer'ın Orta Çağ İngilizcesinden Virginia Woolf ve James Joyce'un Modernist bilinç akışına uzanan **600 yıllık İngiliz ve Amerikan edebiyatı tarihini** 7 ana edebi dönem ve 37 kanonik yazar üzerinden modeller.
+
+---
+
+## 🌟 Aşama 11 Öne Çıkan Yenilikler (Üslup Dönüşüm Reçetesi & Yazar Koçu)
+
+1. **Stilometrik Yazar Koçluğu Motoru (`src/style_coach.py`):**
+   * Kullanıcının girdiği herhangi bir İngilizce metni seçilen hedef kanonik yazarın (Shakespeare, Orwell, Austen, Dickens, Woolf vb.) külliyat centroid profiliyle karşılaştırır.
+   * 70+ stilometrik boyutta $Z$-skoru sapmalarını ($|\Delta z|$) hesaplar, John Burrows' Delta mantığıyla **"Hedef Yazara Uyum Yüzdesi (%)"** skorunu türetir ve en kritik 5 sapmayı tespit eder.
+2. **Adım Adım Eyleme Dönüştürülebilir Üslup Reçetesi:**
+   * Hedef yazarın üslubuna yaklaşmak için somut, matematiksel ve pedagojik tavsiyeler üretir:
+     * *Cümle Uzunluğu & Sözdizimi:* Cümleleri ortalama $+7.5$ kelime uzatma / kısaltma, yan cümlecik ve bağlaç kullanımı.
+     * *Noktalama & Zarf Tavsiyesi:* George Orwell ilkesi doğrultusunda `-ly` zarf oranını azaltma, noktalı virgül (;) ve tire dengesi.
+     * *Sözcük Çeşitliliği & Arkaik Sözler:* Type-Token Ratio (TTR) zenginleştirme veya Rönesans arkaik şahıs ekleri (`-eth`, `-est`, `thou`, `thee`).
+3. **Metin Röntgeni & Stilometrik İşaretçiler:**
+   * Metindeki aşırı uzun cümleleri ($\ge 30$ kelime), `-ly` biçimli zarfları, bilinen arkaik kelimeleri ve noktalama işaretlerini sayısal ve liste olarak filtreler.
+4. **Streamlit Etkileşimli Arayüz (Sekme 7):**
+   * Kullanıcının kendi metnini yazabileceği veya hazır test taslaklarını seçebileceği, 37 yazar arasından hedef belirleyip tek tıkla reçete, sapma tablosu ve metin röntgeni alabildiği **"🎯 Sekme 7: Üslup Koçu & Yazar Simülatörü"** sayfası eklenmiştir.
+5. **Eksiksiz Birim Test Doğrulaması:**
+   * 45 birim testinden oluşan test süiti `%100 OK` doğrulukla çalışmaktadır.
 
 ---
 

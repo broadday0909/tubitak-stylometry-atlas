@@ -34,6 +34,7 @@ from src.feature_extractor import StylometricFeatureExtractor
 from src.gutenberg_fetcher import load_universal_canon_corpus, sync_author_corpus
 from src.literary_network import LiteraryPhylogenyEngine
 from src.prosody_atmosphere import ProsodyAndAtmosphereAnalyzer
+from src.style_coach import StylometricCoach
 from src.visualizer import (
     plot_atmosphere_radar,
     plot_author_distance_heatmap,
@@ -355,15 +356,16 @@ with st.sidebar:
 
 
 # ==============================================================================
-# ALTI ANA SEKME (TABS)
+# YEDİ ANA SEKME (TABS)
 # ==============================================================================
-tab_prediction, tab_catalog, tab_comparison, tab_performance, tab_forensics, tab_network = st.tabs([
+tab_prediction, tab_catalog, tab_comparison, tab_performance, tab_forensics, tab_network, tab_coach = st.tabs([
     "🔍 Sekme 1: Canlı Yazar & Dönem Tespiti",
     "📖 Sekme 2: Edebiyat Tarihi & Külliyat Gezgini",
     "⚖️ Sekme 3: Üslup Evrimi & Yazar Karşılaştırma",
     "📊 Sekme 4: Model Performansı & Birim Testler",
     "🕵️‍♂️ Sekme 5: Adli Stilometri & 2B Üslup Galaksisi",
     "🌳 Sekme 6: Edebi Soy Ağacı & Etki Ağı",
+    "🎯 Sekme 7: Üslup Koçu & Yazar Simülatörü",
 ])
 
 
@@ -1125,6 +1127,265 @@ with tab_network:
         plt.close(fig_heat)
     else:
         st.info("Bu filtreye uygun yazar bulunamadı.")
+
+
+# ------------------------------------------------------------------------------
+# SEKME 7: ÜSLUP KOÇU & HEDEF YAZAR SİMÜLATÖRÜ (AŞAMA 11)
+# ------------------------------------------------------------------------------
+with tab_coach:
+    st.markdown("### 🎯 Hedef Yazar Simülatörü & Üslup Dönüşüm Reçetesi")
+    st.markdown(
+        """
+        Kendi edebi taslağınızı veya denemenizi girin; ardından benzemek istediğiniz hedef kanonik yazarı seçin 
+        *(Örn: George Orwell, William Shakespeare, Jane Austen, Charles Dickens, Virginia Woolf vb.)*. 
+        **Üslup Koçluğu Motoru (Stylometric Coach)**, metninizin 70+ stilometrik boyutunu hedef yazarın 
+        külliyat ortalaması (centroid) ile karşılaştırır; $Z$-skoru sapmalarını hesaplar ve üslubunuzu 
+        hedef yazara yaklaştırmak için **matematiksel, pedagojik ve somut bir Dönüşüm Reçetesi** üretir.
+        """
+    )
+
+    coach_presets = {
+        "Taslak 1: Kısa Cümleli Gazete Haberi (Hedef: Charles Dickens - Cümle Uzatma)": (
+            "The market opened with high volatility today. Prices plunged sharply across the financial sector. "
+            "Analysts expressed grave concern over rising inflation and supply chain delays. The central bank "
+            "refused to intervene immediately. Investors retreated to safe assets as uncertainty dominated trading."
+        ),
+        "Taslak 2: Aşırı '-ly' Zarflı Deneme (Hedef: George Orwell - Zarf Budama)": (
+            "He walked slowly and cautiously down the utterly dark corridor, breathing deeply and extremely nervously. "
+            "The wind blew violently against the shattered window pane, fiercely shaking the fragile wooden frames. "
+            "He quietly whispered into the shadows, hoping desperately that someone would quickly answer."
+        ),
+        "Taslak 3: Düz Modern Düzyazı (Hedef: William Shakespeare - Ritim & Arkaik Dil)": (
+            "You say you love the truth, but your actions show nothing but hesitation. Why do you wait when everything "
+            "is at stake? Speak your mind before time slips away forever. If we fail today, the blame will fall upon us both."
+        ),
+        "Taslak 4: Bilinç Akışı Taslağı (Hedef: Jane Austen - Sözdizimi Dengeleme)": (
+            "And then the thought struck her, sudden as a flash of lightning on a calm afternoon, that perhaps nothing "
+            "of what had been spoken in the drawing room possessed genuine weight, yet she smiled politely and nodded, "
+            "wondering all the while how many masks a person must wear before the evening concludes."
+        ),
+        "Kendi Taslağınızı Giriniz...": "",
+    }
+
+    col_coach_left, col_coach_right = st.columns([3, 2])
+
+    with col_coach_left:
+        selected_coach_preset = st.selectbox(
+            "Hazır Taslak Şablonu Seçiniz (veya kendi metninizi yazınız):",
+            options=list(coach_presets.keys()),
+            index=0,
+            key="coach_preset_select",
+        )
+        default_coach_text = coach_presets[selected_coach_preset]
+
+        user_draft_text = st.text_area(
+            "Dönüştürülecek Metin (İngilizce Taslak):",
+            value=default_coach_text,
+            height=180,
+            placeholder="İngilizce bir metin, paragraf veya taslak giriniz...",
+            key="coach_user_text_area",
+        )
+        words_count = len(user_draft_text.split()) if user_draft_text.strip() else 0
+        st.caption(f"📝 Mevcut Metin: `{words_count}` kelime | `{len(user_draft_text)}` karakter")
+
+    with col_coach_right:
+        default_author = "George Orwell" if "George Orwell" in atlas_info["authors_list"] else atlas_info["authors_list"][0]
+        if "Charles Dickens" in selected_coach_preset:
+            target_auth_default = "Charles Dickens"
+        elif "George Orwell" in selected_coach_preset:
+            target_auth_default = "George Orwell"
+        elif "William Shakespeare" in selected_coach_preset:
+            target_auth_default = "William Shakespeare"
+        elif "Jane Austen" in selected_coach_preset:
+            target_auth_default = "Jane Austen"
+        else:
+            target_auth_default = default_author
+
+        idx_default = (
+            atlas_info["authors_list"].index(target_auth_default)
+            if target_auth_default in atlas_info["authors_list"]
+            else 0
+        )
+
+        selected_target_author = st.selectbox(
+            "🎯 Hedef Kanonik Yazar:",
+            options=atlas_info["authors_list"],
+            index=idx_default,
+            key="coach_target_author_select",
+        )
+
+        # Hedef yazarın edebi bilgisi
+        author_canon_entry = CANON_CATALOG.get(selected_target_author)
+        era_of_author = author_canon_entry.era if author_canon_entry else "Kanonik Dönem"
+        notable_works = ", ".join(author_canon_entry.notable_works[:2]) if author_canon_entry else ""
+
+        st.markdown(
+            f"""
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px; margin-top: 6px;">
+                <div style="font-weight: 700; color: #1e293b; font-size: 1rem;">🏛️ {selected_target_author}</div>
+                <div style="font-size: 0.85rem; color: #3b82f6; font-weight: 600; margin: 3px 0;">Dönem: {era_of_author}</div>
+                <div style="font-size: 0.8rem; color: #64748b;">📚 Başlıca Eserleri: <i>{notable_works}</i></div>
+                <div style="font-size: 0.78rem; color: #475569; margin-top: 6px; border-top: 1px dashed #e2e8f0; padding-top: 4px;">
+                    ⚡ <b>Hedef:</b> Bu yazarın morfolojik, sentaktik ve sözcüksel üslup parmak izini metninize aktarmak.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        btn_run_coach = st.button("🚀 Üslup Koçunu Çalıştır & Reçete Üret", type="primary", use_container_width=True)
+
+    # Koçluk Analizini Çalıştır
+    if user_draft_text.strip():
+        if len(user_draft_text.strip().split()) < 10:
+            st.warning("⚠️ Sağlıklı bir stilometrik analiz için lütfen en az 10-15 kelimelik bir metin giriniz.")
+        else:
+            coach_engine = StylometricCoach(classifier=clf, extractor=StylometricFeatureExtractor())
+            comparison = coach_engine.compare_with_target_author(user_draft_text, selected_target_author)
+            prescriptions = coach_engine.generate_prescription(user_draft_text, selected_target_author)
+            markers = coach_engine.highlight_stylistic_markers(user_draft_text)
+
+            st.markdown("---")
+            st.markdown(f"### 📈 Stilometrik Karşılaştırma & Koçluk Raporu: {selected_target_author}")
+
+            # 1. KPI Metrik Kartları
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            sim_pct = comparison["similarity_pct"]
+            sim_color = "#16a34a" if sim_pct >= 65 else ("#f59e0b" if sim_pct >= 45 else "#dc2626")
+
+            with col_m1:
+                st.markdown(
+                    f"""
+                    <div style="background: #ffffff; border: 2px solid {sim_color}40; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Hedefe Uyum Skoru</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: {sim_color};">%{sim_pct}</div>
+                        <div style="font-size: 0.75rem; color: #475569;">Stilometrik Benzerlik</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with col_m2:
+                delta_val = comparison["mean_delta_distance"]
+                st.markdown(
+                    f"""
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Burrows' Delta</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: #0284c7;">{delta_val}</div>
+                        <div style="font-size: 0.75rem; color: #475569;">Ortalama Z-Sapması</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with col_m3:
+                top_dev_count = len(comparison["top_deviations"])
+                st.markdown(
+                    f"""
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Kritik Fark Sayısı</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: #ea580c;">{top_dev_count}</div>
+                        <div style="font-size: 0.75rem; color: #475569;">Düzeltilecek Boyut</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with col_m4:
+                marker_cnt = markers["long_sentence_count"] + markers["adverb_count"] + markers["archaic_count"]
+                st.markdown(
+                    f"""
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Özel İşaretçi</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: #7c3aed;">{marker_cnt}</div>
+                        <div style="font-size: 0.75rem; color: #475569;">Zarf / Arkaik / Uzun Cümle</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            # 2. Adım Adım Üslup Dönüşüm Reçetesi
+            st.markdown("---")
+            st.markdown("#### 📋 Adım Adım Somut Üslup Dönüşüm Reçetesi (Stylometric Action Plan)")
+            st.caption(f"{selected_target_author} üslubuna yaklaşmak için yapılması gereken matematiksel ve pedagojik düzenlemeler:")
+
+            for idx, p in enumerate(prescriptions, 1):
+                action_bg = "#ecfdf5" if "Artır" in p["action"] or "Uzat" in p["action"] else "#fef2f2"
+                action_color = "#047857" if "Artır" in p["action"] or "Uzat" in p["action"] else "#b91c1c"
+                if "Sadeleştir" in p["action"] or "Budayın" in p["action"]:
+                    action_bg = "#fff7ed"
+                    action_color = "#c2410c"
+
+                st.markdown(
+                    f"""
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid {action_color}; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Adım #{idx}: {p['category']}</span>
+                            <span style="background: {action_bg}; color: {action_color}; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;">
+                                {p['action']}
+                            </span>
+                        </div>
+                        <div style="font-size: 1rem; font-weight: 600; color: #0f172a; margin-bottom: 6px; line-height: 1.5;">
+                            {p['recommendation']}
+                        </div>
+                        <div style="font-size: 0.82rem; color: #475569; border-top: 1px dashed #f1f5f9; padding-top: 6px;">
+                            💡 <b>Hedeflenen Edebi Etki:</b> {p['impact']}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            # 3. Eksik / Fazla Stilometrik Özellikler Tablosu
+            st.markdown("---")
+            st.markdown("#### 📊 Eksik ve Fazla Stilometrik Özellikler ($Z$-Skor Sapma Analizi)")
+
+            dev_rows = []
+            for d in comparison["top_deviations"]:
+                dev_rows.append({
+                    "Stilometrik Öznitelik": d["friendly_name"],
+                    "Sizin Metniniz": d["user_value"],
+                    f"{selected_target_author} Ortalaması": d["target_value"],
+                    "Z-Skor Farkı (ΔZ)": f"{'+' if d['z_diff'] > 0 else ''}{d['z_diff']}",
+                    "Gerekli Eylem": d["direction"],
+                })
+
+            df_deviations = pd.DataFrame(dev_rows)
+            st.dataframe(df_deviations, use_container_width=True, hide_index=True)
+
+            # 4. Metin Röntgeni & Edebi İşaretçiler
+            st.markdown("---")
+            st.markdown("#### 🔬 Metin Röntgeni & Tespit Edilen Stilometrik İşaretçiler")
+
+            col_roentgen1, col_roentgen2, col_roentgen3 = st.columns(3)
+
+            with col_roentgen1:
+                st.markdown("##### 📏 Cümle Yapısı")
+                st.write(f"• **Toplam Cümle:** `{markers['total_sentences']}` adet")
+                st.write(f"• **Toplam Kelime:** `{markers['total_words']}` adet")
+                st.write(f"• **Uzun Cümle (≥30 kelime):** `{markers['long_sentence_count']}` adet")
+                if markers["long_sentence_count"] > 0:
+                    with st.expander("Tespit Edilen Uzun Cümleler"):
+                        for ls in markers["long_sentences"]:
+                            st.caption(f"• ({ls['word_count']} kelime): *\"{ls['preview']}\"*")
+
+            with col_roentgen2:
+                st.markdown("##### ✍️ -ly Zarfları & Arkaik Sözler")
+                st.write(f"• **'-ly' Zarf Sayısı:** `{markers['adverb_count']}` adet")
+                if markers["adverbs_ly"]:
+                    st.write(f"  *Örnekler:* {', '.join([f'`{w}`' for w in markers['adverbs_ly'][:6]])}")
+                st.write(f"• **Arkaik Kelime Sayısı:** `{markers['archaic_count']}` adet")
+                if markers["archaic_words"]:
+                    st.write(f"  *Bulunanlar:* {', '.join([f'`{w}`' for w in markers['archaic_words']])}")
+
+            with col_roentgen3:
+                st.markdown("##### 🔤 Noktalama Dağılımı")
+                st.write(f"• **Noktalı Virgül (;):** `{markers['semicolon_count']}` adet")
+                st.write(f"• **İki Nokta (:):** `{markers['colon_count']}` adet")
+                st.write(f"• **Uzun Tire (—):** `{markers['dash_count']}` adet")
+                st.caption("Noktalı virgüller ve uzun tireler özellikle 18-19. yüzyıl kanonik yazarlarında belirgindir.")
+    else:
+        st.info("👆 Lütfen yukarıdaki alana İngilizce bir metin girin veya hazır bir şablon seçerek 'Üslup Koçunu Çalıştır' butonuna basın.")
 
 
 # ==============================================================================
