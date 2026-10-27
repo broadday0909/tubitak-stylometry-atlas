@@ -23,6 +23,7 @@ if sys.platform == "win32":
 import pandas as pd
 from tabulate import tabulate
 
+from src.advanced_forensics import AdvancedForensicsEngine
 from src.canon_catalog import CANON_CATALOG, LITERARY_ERAS
 from src.classifier import StylometryClassifier
 from src.corpus_builder import build_hierarchical_stylometry_dataset
@@ -157,7 +158,40 @@ def main() -> None:
     df_imp = clf.get_feature_importances(top_n=10)
     print(tabulate(df_imp, headers="keys", tablefmt="fancy_grid", showindex=True))
 
-    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası boru hattı kusursuz çalıştı.")
+    print("\n" + "=" * 95)
+    print(" [6] İLERİ DÜZEY ADLİ STİLOMETRİ, AI DEDEKTÖRÜ & 2B PCA GALAKSİSİ (AŞAMA 8)")
+    print("=" * 95)
+    forensics = AdvancedForensicsEngine(clf, extractor)
+
+    # A. AI vs. Human Tespiti
+    sample_human = blind_tests[1][3]
+    ai_res = forensics.detect_ai_imitation(sample_human)
+    print(f"\n-> AI vs. İnsan Dedektörü Doğrulaması (Shakespeare Pasajı):")
+    print(f"   Karar: {ai_res['verdict']}")
+    print(f"   Organik Üslup: %{ai_res['human_authenticity_pct']} | LLM Taklit Riski: %{ai_res['ai_probability_pct']}")
+    print(f"   Burstiness CV: {ai_res['sentence_variation_cv']} | Hapax Oranı: {ai_res['hapax_ratio']}")
+
+    # B. Rolling Stylometry
+    collab_sample = (
+        "Was this the face that launch'd a thousand ships, and burnt the topless towers of Ilium? "
+        "Sweet Helen, make me immortal with a kiss! Her lips suck forth my soul; see where it flies! "
+        "To be, or not to be, that is the question: whether 'tis nobler in the mind to suffer "
+        "the slings and arrows of outrageous fortune, or to take arms against a sea of troubles."
+    )
+    segs = forensics.rolling_stylometry(collab_sample, "William Shakespeare", "Christopher Marlowe", window_words=20, step_words=10)
+    print(f"\n-> Rolling Stylometry (Shakespeare vs. Marlowe - {len(segs)} Kayan Segment):")
+    seg_table = [[s["segment_id"], s["word_range"], f"%{s['William Shakespeare']}", f"%{s['Christopher Marlowe']}", s["dominant_author"]] for s in segs]
+    print(tabulate(seg_table, headers=["Segment #", "Aralık", "Shakespeare (%)", "Marlowe (%)", "Baskın Yazar"], tablefmt="fancy_grid"))
+
+    # C. 2D PCA Galaksisi
+    pca_data = forensics.compute_stylometric_galaxy_pca(df_X, list(s_y_author), list(s_y_era), query_text=sample_human)
+    var1, var2 = pca_data["explained_variance"]
+    q_pt = pca_data["query_point"]
+    print(f"\n-> 2B PCA Üslup Galaksisi:")
+    print(f"   37 Yazar Merkez Noktaları Hesaplandı. PC1: %{var1} | PC2: %{var2} varyans açıklandı.")
+    print(f"   Test Metni Koordinatı: PC1={q_pt['PC1']}, PC2={q_pt['PC2']}")
+
+    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 8) boru hattı kusursuz çalıştı.")
 
 
 if __name__ == "__main__":

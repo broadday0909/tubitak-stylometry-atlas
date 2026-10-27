@@ -299,3 +299,211 @@ def _prettify_feature_name(raw_name: str) -> str:
         p = raw_name[6:-6]
         return f"Noktalama: {p}"
     return raw_name
+
+
+def plot_rolling_stylometry(
+    segments: List[Dict[str, Any]],
+    author_a: str,
+    author_b: str,
+    title: str = "Ortak Yazarlık Tarayıcısı (Rolling Stylometry Analizi)",
+) -> Figure:
+    """
+    Kayan pencere segmentleri boyunca iki yazarın üslup baskınlığını (%0-%100)
+    gösteren çift çizgili ve alanlı (area/line chart) grafik üretir.
+    
+    Args:
+        segments: AdvancedForensicsEngine.rolling_stylometry çıktısı olan segment listesi.
+        author_a: 1. Yazar adı.
+        author_b: 2. Yazar adı.
+        title: Grafik başlığı.
+        
+    Returns:
+        Figure: Matplotlib Figure nesnesi.
+    """
+    fig, ax = plt.subplots(figsize=(10, 4.8), dpi=120)
+
+    if not segments:
+        ax.text(0.5, 0.5, "Yeterli segment verisi bulunamadı.", ha="center", va="center")
+        return fig
+
+    x_indices = [s["segment_id"] for s in segments]
+    scores_a = [s[author_a] for s in segments]
+    scores_b = [s[author_b] for s in segments]
+
+    color_a = "#2563eb"  # Mavi
+    color_b = "#dc2626"  # Kırmızı
+
+    # Çizgiler
+    ax.plot(
+        x_indices,
+        scores_a,
+        label=author_a,
+        color=color_a,
+        linewidth=2.4,
+        marker="o",
+        markersize=4.5,
+    )
+    ax.plot(
+        x_indices,
+        scores_b,
+        label=author_b,
+        color=color_b,
+        linewidth=2.4,
+        marker="s",
+        markersize=4.5,
+    )
+
+    # %50 Denge çizgisi
+    ax.axhline(50, color="#94a3b8", linestyle="--", linewidth=1.2, alpha=0.8, label="%50 Denge Eşiği")
+
+    # Alan dolguları
+    ax.fill_between(
+        x_indices,
+        scores_a,
+        50,
+        where=np.array(scores_a) >= 50,
+        interpolate=True,
+        color=color_a,
+        alpha=0.15,
+    )
+    ax.fill_between(
+        x_indices,
+        scores_b,
+        50,
+        where=np.array(scores_b) >= 50,
+        interpolate=True,
+        color=color_b,
+        alpha=0.15,
+    )
+
+    ax.set_ylim(-2, 102)
+    ax.set_xlabel("Metin Segmenti (Kayan Pencere)", fontsize=10.5, weight="semibold", color="#334155")
+    ax.set_ylabel("Üslup Baskınlığı (%)", fontsize=10.5, weight="semibold", color="#334155")
+    ax.set_title(title, fontsize=12.5, weight="bold", pad=14, color="#0f172a")
+
+    if len(x_indices) <= 25:
+        ax.set_xticks(x_indices)
+        seg_labels = [
+            f"S{s['segment_id']}\n({s['word_range']})" if i % 2 == 0 else f"S{s['segment_id']}"
+            for i, s in enumerate(segments)
+        ]
+        ax.set_xticklabels(seg_labels, fontsize=8.5)
+
+    ax.legend(loc="upper right", frameon=True, facecolor="#ffffff", edgecolor="#cbd5e1", fontsize=9.5)
+    sns.despine(top=True, right=True)
+    fig.tight_layout()
+    return fig
+
+
+def plot_stylometric_galaxy(
+    pca_data: Dict[str, Any],
+    title: str = "37 Kanonik Yazar ve Metninizin 2B Üslup Galaksisi (PCA Haritası)",
+) -> Figure:
+    """
+    37 yazarı edebi dönem renkleriyle 2B PCA haritasında gösteren ve
+    kullanıcının test metnini büyük kırmızı bir yıldızla ('★ Sizin Metniniz')
+    işaretleyen scatter plot fonksiyonu.
+    
+    Args:
+        pca_data: AdvancedForensicsEngine.compute_stylometric_galaxy_pca çıktısı.
+        title: Grafik başlığı.
+        
+    Returns:
+        Figure: Matplotlib Figure nesnesi.
+    """
+    fig, ax = plt.subplots(figsize=(10.5, 6.5), dpi=120)
+
+    centroids: pd.DataFrame = pca_data["centroids"]
+    query_point: Optional[Dict[str, float]] = pca_data.get("query_point")
+    explained_variance = pca_data.get("explained_variance", [0.0, 0.0])
+
+    era_colors = {
+        "Middle English": "#7c3aed",
+        "Renaissance": "#2563eb",
+        "Enlightenment": "#0d9488",
+        "Romanticism": "#e11d48",
+        "Victorian": "#d97706",
+        "American Classics": "#059669",
+        "Modernism": "#db2777",
+    }
+
+    # Her dönem için scatter plot çiz
+    for era in centroids["Era"].unique():
+        sub = centroids[centroids["Era"] == era]
+        color = era_colors.get(era, "#64748b")
+        ax.scatter(
+            sub["PC1"],
+            sub["PC2"],
+            label=era,
+            color=color,
+            s=120,
+            alpha=0.88,
+            edgecolors="#ffffff",
+            linewidth=1.2,
+            zorder=3,
+        )
+
+        for _, row in sub.iterrows():
+            ax.annotate(
+                row["Author"],
+                (row["PC1"], row["PC2"]),
+                xytext=(5, 4),
+                textcoords="offset points",
+                fontsize=8,
+                weight="medium",
+                color="#1e293b",
+                alpha=0.9,
+                zorder=4,
+            )
+
+    # Kullanıcının metni varsa büyük kırmızı yıldızla işaretle
+    if query_point:
+        ax.scatter(
+            [query_point["PC1"]],
+            [query_point["PC2"]],
+            color="#ef4444",
+            s=360,
+            marker="*",
+            edgecolors="#7f1d1d",
+            linewidth=1.5,
+            label="★ Sizin Metniniz",
+            zorder=6,
+        )
+        ax.annotate(
+            "★ SİZİN METNİNİZ",
+            (query_point["PC1"], query_point["PC2"]),
+            xytext=(10, 8),
+            textcoords="offset points",
+            fontsize=10,
+            weight="bold",
+            color="#b91c1c",
+            bbox=dict(boxstyle="round,pad=0.25", fc="#fee2e2", ec="#ef4444", alpha=0.9),
+            zorder=7,
+        )
+
+    var1 = explained_variance[0] if len(explained_variance) > 0 else 0.0
+    var2 = explained_variance[1] if len(explained_variance) > 1 else 0.0
+
+    ax.set_xlabel(f"1. Temel Bileşen - PC1 (Açıklanan Varyans: %{var1})", fontsize=10.5, weight="semibold", color="#334155")
+    ax.set_ylabel(f"2. Temel Bileşen - PC2 (Açıklanan Varyans: %{var2})", fontsize=10.5, weight="semibold", color="#334155")
+    ax.set_title(title, fontsize=12.5, weight="bold", pad=15, color="#0f172a")
+
+    ax.legend(
+        loc="upper left",
+        bbox_to_anchor=(1.01, 1),
+        frameon=True,
+        facecolor="#ffffff",
+        edgecolor="#cbd5e1",
+        fontsize=9,
+        title="Edebi Dönemler",
+        title_fontsize=9.5,
+    )
+
+    ax.axhline(0, color="#e2e8f0", linestyle="-", linewidth=0.8, zorder=1)
+    ax.axvline(0, color="#e2e8f0", linestyle="-", linewidth=0.8, zorder=1)
+    ax.grid(True, linestyle="--", alpha=0.5, color="#cbd5e1", zorder=1)
+
+    sns.despine(top=True, right=True)
+    fig.tight_layout()
+    return fig
+

@@ -26,6 +26,7 @@ import pandas as pd
 import streamlit as st
 from sklearn.model_selection import train_test_split
 
+from src.advanced_forensics import AdvancedForensicsEngine
 from src.canon_catalog import CANON_CATALOG, LITERARY_ERAS, AuthorEntry, get_all_eras, get_authors_by_era
 from src.classifier import StylometryClassifier
 from src.corpus_builder import build_hierarchical_stylometry_dataset
@@ -36,6 +37,8 @@ from src.visualizer import (
     plot_confusion_matrix,
     plot_feature_importance,
     plot_probability_bars,
+    plot_rolling_stylometry,
+    plot_stylometric_galaxy,
 )
 
 # ==============================================================================
@@ -123,6 +126,15 @@ st.markdown(
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         margin-bottom: 16px;
     }
+    .ai-detector-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        border: 1px solid #6366f1;
+        border-radius: 12px;
+        padding: 18px 22px;
+        color: #ffffff;
+        margin: 16px 0;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+    }
     .dev-footer {
         text-align: center;
         padding: 24px 0 16px 0;
@@ -191,6 +203,9 @@ def initialize_universal_atlas(
         "author_cv": training_results["author_layer"],
         "era_cv": training_results["era_layer"],
         "eval_results": eval_results,
+        "df_X": df_X,
+        "y_authors": s_y_author,
+        "y_eras": s_y_era,
     }
 
     return clf, atlas_info, X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test
@@ -335,13 +350,14 @@ with st.sidebar:
 
 
 # ==============================================================================
-# DÖRT ANA SEKME (TABS)
+# BEŞ ANA SEKME (TABS)
 # ==============================================================================
-tab_prediction, tab_catalog, tab_comparison, tab_performance = st.tabs([
+tab_prediction, tab_catalog, tab_comparison, tab_performance, tab_forensics = st.tabs([
     "🔍 Sekme 1: Canlı Yazar & Dönem Tespiti",
     "📖 Sekme 2: Edebiyat Tarihi & Külliyat Gezgini",
     "⚖️ Sekme 3: Üslup Evrimi & Yazar Karşılaştırma",
     "📊 Sekme 4: Model Performansı & Birim Testler",
+    "🕵️‍♂️ Sekme 5: Adli Stilometri & 2B Üslup Galaksisi",
 ])
 
 
@@ -473,6 +489,69 @@ with tab_prediction:
                     f"Burrows' Delta mesafesine göre metin en çok **{delta_results[0][0]}** üslubuna yaklaşmaktadır "
                     f"(Delta: {delta_results[0][1]})."
                 )
+
+                # 5. Adli Yapay Zeka (LLM) vs. Gerçek Yazar Doğrulaması
+                forensics = AdvancedForensicsEngine(clf, extractor)
+                ai_analysis = forensics.detect_ai_imitation(text_input)
+                forensic_report_md = forensics.generate_forensic_report_markdown(
+                    text=text_input,
+                    predicted_era=predicted_era,
+                    top_authors=top_authors,
+                    ai_analysis=ai_analysis,
+                )
+                st.session_state["last_query_text"] = text_input
+
+                st.markdown("---")
+                st.markdown("### 🤖 Yapay Zeka (LLM) vs. Gerçek Yazar Doğrulaması")
+
+                ai_badge_color = "#10b981" if ai_analysis["human_authenticity_pct"] >= 55.0 else "#ef4444"
+                st.markdown(
+                    f"""
+                    <div class="ai-detector-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                            <span style="font-size: 1.15rem; font-weight: 700; color: #f8fafc;">Adli Stilometrik Karar:</span>
+                            <span style="background: {ai_badge_color}; color: #ffffff; padding: 4px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 700;">
+                                {ai_analysis['verdict']}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.95rem; color: #cbd5e1; margin-bottom: 14px;">
+                            Metnin sözcüksel varyansı (Burstiness), cümle boyutu dalgalanması ve Hapax Legomena (nadir tekil kelime)
+                            entropisi analiz edilerek sentetik makine üretimi (ChatGPT/LLM pastiche) olup olmadığı doğrulanmıştır.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                col_ai1, col_ai2, col_ai3, col_ai4 = st.columns(4)
+                with col_ai1:
+                    st.metric("🌿 Organik İnsan Üslubu", f"%{ai_analysis['human_authenticity_pct']:.1f}")
+                with col_ai2:
+                    st.metric("🤖 LLM Taklit Riski", f"%{ai_analysis['ai_probability_pct']:.1f}")
+                with col_ai3:
+                    st.metric("📈 Cümle Ritim Varyansı (CV)", f"{ai_analysis['sentence_variation_cv']:.2f}",
+                              help="İnsan yazarlarında cümle uzunluğu dalgalanması (CV) çok daha yüksektir.")
+                with col_ai4:
+                    st.metric("💎 Hapax Legomena Oranı", f"{ai_analysis['hapax_ratio']:.3f}",
+                              help="Metindeki tekil/nadir sözcük zenginliği.")
+
+                st.markdown("---")
+                col_rep_btn, col_rep_info = st.columns([1.3, 2])
+                with col_rep_btn:
+                    st.download_button(
+                        label="📥 Resmi TÜBİTAK Adli Stilometri Raporunu İndir (.md)",
+                        data=forensic_report_md,
+                        file_name=f"TUBITAK_Adli_Rapor_{best_author.replace(' ', '_')}.md",
+                        mime="text/markdown",
+                        type="primary",
+                        use_container_width=True,
+                    )
+                with col_rep_info:
+                    st.caption(
+                        "📄 Bu resmi adli rapor; çift katmanlı hiyerarşik sınıflandırma sonuçlarını, "
+                        "Burrows' Delta z-skorlarını ve AI pastiche analizlerini 'Developed by Bayram Akpamukçu' "
+                        "resmi imzasıyla belgelendirir."
+                    )
 
 
 # ------------------------------------------------------------------------------
@@ -667,6 +746,155 @@ with tab_performance:
                 st.success(f"✓ TÜM BİRİM TESTLER BAŞARIYLA GEÇTİ! ({result.testsRun} test çalıştırıldı, 0 hata, 0 başarısızlık).")
             else:
                 st.error(f"Testler tamamlandı: {len(result.failures)} başarısızlık, {len(result.errors)} hata.")
+
+
+# ------------------------------------------------------------------------------
+# SEKME 5: ADLİ STİLOMETRİ & 2B ÜSLUP GALAKSİSİ
+# ------------------------------------------------------------------------------
+with tab_forensics:
+    st.markdown("### 🕵️‍♂️ İleri Düzey Adli Stilometri & 2B Üslup Galaksisi")
+    st.markdown(
+        "Bu modül, adli edebiyat araştırmalarında (Computational Forensics) kullanılan iki ileri düzey yöntemi sunar: "
+        "**Rolling Stylometry** (sahne/bölüm bazlı ortak yazarlık ayrıştırması) ve **2B PCA Üslup Galaksisi** "
+        "(70+ boyutlu üslup uzayının 2 boyuta izdüşümü)."
+    )
+
+    st.markdown("---")
+    st.markdown("#### 🔬 Alt Bölüm A: Ortak Yazarlık Tarayıcısı (Rolling Stylometry)")
+    st.markdown(
+        "Kayan pencere (Sliding Window) tekniği, özellikle ortak yazıldığı bilinen veya şüphelenilen tiyatro ve romanlarda "
+        "(Örn: *William Shakespeare* ile *Christopher Marlowe* veya *John Fletcher* işbirlikleri) "
+        "metin ilerledikçe üslup hakimiyetinin hangi yazara ait olduğunu adım adım izler."
+    )
+
+    all_authors_sorted = sorted(list(set(atlas_info["authors_list"])))
+    col_r1, col_r2 = st.columns(2)
+    with col_r1:
+        shak_idx = all_authors_sorted.index("William Shakespeare") if "William Shakespeare" in all_authors_sorted else 0
+        roll_author_a = st.selectbox(
+            "1. Yazar Adayı:",
+            options=all_authors_sorted,
+            index=shak_idx,
+            key="roll_a_select",
+        )
+    with col_r2:
+        marl_idx = all_authors_sorted.index("Christopher Marlowe") if "Christopher Marlowe" in all_authors_sorted else 1
+        roll_author_b = st.selectbox(
+            "2. Yazar Adayı:",
+            options=all_authors_sorted,
+            index=marl_idx,
+            key="roll_b_select",
+        )
+
+    # Örnek çok sahneli dramatik metin
+    default_collaborative_text = (
+        "Was this the face that launch'd a thousand ships, and burnt the topless towers of Ilium? "
+        "Sweet Helen, make me immortal with a kiss! Her lips suck forth my soul; see where it flies! "
+        "Come, Helen, come, give me my soul again. Here will I dwell, for heaven is in these lips, "
+        "and all is dross that is not Helena. I will be Paris, and for love of thee, "
+        "instead of Troy, shall Wittenberg be sack'd; and I will combat with weak Menelaus, "
+        "and wear thy colours on my plumed crest; yea, I will wound Achilles in the heel, "
+        "and then return to Helen for a kiss. O, thou art fairer than the evening air "
+        "clad in the beauty of a thousand stars; brighter art thou than flaming Jupiter "
+        "when he appear'd to hapless Semele; more lovely than the monarch of the sky "
+        "in wanton Arethusa's azur'd arms; and none but thou shalt be my paramour! "
+        "To be, or not to be, that is the question: whether 'tis nobler in the mind to suffer "
+        "the slings and arrows of outrageous fortune, or to take arms against a sea of troubles "
+        "and by opposing end them. To die—to sleep, no more; and by a sleep to say we end "
+        "the heart-ache and the thousand natural shocks that flesh is heir to: 'tis a consummation "
+        "devoutly to be wish'd. To die, to sleep; to sleep, perchance to dream—ay, there's the rub: "
+        "for in that sleep of death what dreams may come, when we have shuffled off this mortal coil, "
+        "must give us pause. There's the respect that makes calamity of so long life."
+    )
+
+    roll_text_input = st.text_area(
+        "İncelenecek Çok Bölümlü / Ortak Edebi Metin:",
+        value=default_collaborative_text,
+        height=140,
+        key="roll_text_area",
+    )
+
+    col_w1, col_w2, col_w3 = st.columns([1, 1, 1])
+    with col_w1:
+        win_size = st.slider("Pencere Büyüklüğü (Kelime):", min_value=15, max_value=80, value=35, step=5)
+    with col_w2:
+        step_sz = st.slider("Kaydırma Adımı (Step Size):", min_value=10, max_value=40, value=20, step=5)
+    with col_w3:
+        st.write("")
+        st.write("")
+        run_roll_btn = st.button("📈 Rolling Stylometry Analizini Çalıştır", type="primary", use_container_width=True)
+
+    if run_roll_btn or roll_text_input:
+        with st.spinner("Kayan pencere ile üslup dalgalanması hesaplanıyor..."):
+            forensics_roll = AdvancedForensicsEngine(clf, StylometricFeatureExtractor())
+            segments = forensics_roll.rolling_stylometry(
+                roll_text_input,
+                author_a=roll_author_a,
+                author_b=roll_author_b,
+                window_words=win_size,
+                step_words=step_sz,
+            )
+
+        if segments:
+            fig_roll = plot_rolling_stylometry(
+                segments,
+                author_a=roll_author_a,
+                author_b=roll_author_b,
+                title=f"Ortak Yazarlık Üslup Dağılımı: {roll_author_a} vs. {roll_author_b}",
+            )
+            st.pyplot(fig_roll)
+            plt.close(fig_roll)
+
+            st.markdown("##### 📑 Bölüm Bazlı Üslup Dağılımı Tablosu")
+            df_segs = pd.DataFrame(segments)
+            df_segs = df_segs.rename(columns={
+                "segment_id": "Segment #",
+                "word_range": "Kelime Aralığı",
+                "preview": "Metin Önizlemesi",
+                roll_author_a: f"{roll_author_a} (%)",
+                roll_author_b: f"{roll_author_b} (%)",
+                "dominant_author": "Baskın Yazar",
+            })
+            st.dataframe(df_segs, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.markdown("#### 🌌 Alt Bölüm B: 2B Edebiyat Galaksisi (PCA Haritası)")
+    st.markdown(
+        "70+ boyutlu stilometrik öznitelik uzayı (TTR, sözcük boyutu, arkaik oranlar, ek frekansları, noktalama entropisi), "
+        "**Temel Bileşen Analizi (PCA)** ile 2 boyuta (PC1 ve PC2) indirgenmiştir. "
+        "Aşağıdaki harita, 37 kanonik yazarın üslup merkezlerini edebi dönem renkleriyle gösterir. "
+        "Sekme 1'de analiz edilen metin varsa büyük kırmızı bir yıldızla ('★ Sizin Metniniz') uzaya yerleştirilir."
+    )
+
+    query_from_tab1 = st.session_state.get("last_query_text", "")
+    col_q1, col_q2 = st.columns([3, 1])
+    with col_q1:
+        if query_from_tab1:
+            st.success(f"📍 **Canlı Test Metni Yüklendi:** \"{query_from_tab1[:85].strip()}...\" (Kırmızı yıldızla işaretleniyor)")
+        else:
+            st.info("💡 Sekme 1'de bir metin analiz ettiğinizde, o metnin koordinatları otomatik olarak bu galaksiye yansıtılacaktır.")
+    with col_q2:
+        recalc_pca_btn = st.button("🌌 Galaksiyi Güncelle / Yenile", use_container_width=True)
+
+    with st.spinner("70+ boyutlu stilometri matrisi PCA ile 2B uzaya izdüşürülüyor..."):
+        forensics_pca = AdvancedForensicsEngine(clf, StylometricFeatureExtractor())
+        pca_data = forensics_pca.compute_stylometric_galaxy_pca(
+            X_corpus=atlas_info["df_X"],
+            y_authors=list(atlas_info["y_authors"]),
+            y_eras=list(atlas_info["y_eras"]),
+            query_text=query_from_tab1,
+        )
+
+    fig_galaxy = plot_stylometric_galaxy(
+        pca_data,
+        title="37 Kanonik Yazar ve Metninizin 2B Üslup Galaksisi (PCA Haritası)",
+    )
+    st.pyplot(fig_galaxy)
+    plt.close(fig_galaxy)
+
+    with st.expander("🔍 37 Yazarın PCA Merkez Koordinatları (Centroids)"):
+        st.dataframe(pca_data["centroids"], use_container_width=True, hide_index=True)
+
 
 # ==============================================================================
 # Sayfa Altbilgisi (Footer)

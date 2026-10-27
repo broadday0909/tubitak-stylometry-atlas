@@ -8,12 +8,12 @@
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3%2B-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-25%2F25%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-30%2F30%20Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
   <b>Hesaplamalı Edebiyat (Computational Literary Studies) ve Doğal Dil İşleme (NLP) Altyapısı</b><br>
-  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta Z-Skor Mesafesi
+  7 Edebi Dönem • 37 Kanonik Yazar • Çift Katmanlı Sınıflandırma • Hiyerarşik Koşullandırma • Burrows' Delta • Rolling Stylometry • AI Dedektörü • 2B PCA Galaksisi
 </p>
 
 </div>
@@ -22,13 +22,28 @@
 
 ## 📌 Proje Genel Bakışı
 
-Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)** ve **üslup evrimi karşılaştırması** yapan ileri düzey bir yapay zekâ ve Doğal Dil İşleme (NLP) sistemidir.
+Bu proje, edebi metinlerin biçimsel, sözcüksel ve sözdizimsel üslup özelliklerini (**70+ stilometrik boyut / stylometric fingerprint**) matematiksel olarak analiz ederek **edebi dönem tespiti (era detection)**, **yazar atfı (authorship attribution)**, **adli ortak yazarlık taraması (rolling stylometry)**, **yapay zeka taklit tespiti (AI pastiche detector)** ve **2B üslup uzayı izdüşümü (PCA Galaxy)** yapan ileri düzey bir hesaplamalı edebiyat sistemidir.
 
 TÜBİTAK standartlarına uygun olarak tasarlanan mimari, Geoffrey Chaucer'ın Orta Çağ İngilizcesinden Virginia Woolf ve James Joyce'un Modernist bilinç akışına uzanan **600 yıllık İngiliz ve Amerikan edebiyatı tarihini** 7 ana edebi dönem ve 37 kanonik yazar üzerinden modeller.
 
 ---
 
-## 🌟 Aşama 6 & 7 Öne Çıkan Yenilikler
+## 🌟 Aşama 8 Öne Çıkan Yenilikler (Adli Stilometri & 2B Üslup Galaksisi)
+
+1. **Ortak Yazarlık Tarayıcısı (Rolling Stylometry):**
+   * Kayan pencere (Sliding window) algoritması ile çok sahneli/bölümlü dramatik metinlerde sahne sahne yazar hakimiyetini (örn. *William Shakespeare* vs. *Christopher Marlowe*) sayısal olarak hesaplar ve dinamik çift çizgili alan grafiğiyle görselleştirir.
+2. **Yapay Zeka (LLM) vs. Gerçek İnsan Yazar Dedektörü:**
+   * Cümle uzunluğu varyasyon katsayısı (**Burstiness / CV**), **Hapax Legomena** tekil kelime zenginliği ve noktalama entropisini birleştirerek metnin organik bir edebiyat dehası mı yoksa ChatGPT/LLM tarafından üretilmiş mekanik bir taklit (pastiche) mi olduğunu adli kesinlikle tespit eder.
+3. **2B Edebiyat Galaksisi (PCA Haritası):**
+   * 70+ boyutlu stilometrik uzayı **Temel Bileşen Analizi (PCA)** ile 2 boyuta indirgeyerek 37 yazarın küme merkezlerini (centroids) 7 edebi dönemin renkleriyle haritalandırır; kullanıcının test ettiği metni uzaya büyük kırmızı bir yıldızla ("★ Sizin Metniniz") yerleştirir.
+4. **Resmi TÜBİTAK Adli Stilometri Raporu İndirme:**
+   * Yapılan analizleri *"Developed by Bayram Akpamukçu"* resmi imzası ve zaman damgasıyla indirilebilir Markdown (.md) adli sertifikaya dönüştürür.
+5. **Kapsamlı Test Süiti:**
+   * 30 birim testinden oluşan test süiti `%100 OK` doğrulukla çalışmaktadır.
+
+---
+
+## 🌟 Aşama 6 & 7 Öne Çıkan Başarılar
 
 1. **Hiyerarşik Koşullu Yazar Tahmini (Hierarchical Conditioning):**
    * Multi-class SVM sınıflandırıcısında yaşanan anakronik sapmaları (örn: Viktorya dönemi tespit edilen Dickens pasajında 20. yüzyıl yazarı Hemingway tahmini yapılması) ortadan kaldırmak için Katman 1 Dönem olasılıkları $P(\text{Era}|X)$, ham yazar olasılıkları $P(\text{Author}|X)$ ve Burrows' Delta yakınlığı ($\exp(-\Delta)$) tek bir olasılık dağılımında birleştirilmiştir.
