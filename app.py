@@ -35,6 +35,7 @@ from src.gutenberg_fetcher import load_universal_canon_corpus, sync_author_corpu
 from src.literary_network import LiteraryPhylogenyEngine
 from src.prosody_atmosphere import ProsodyAndAtmosphereAnalyzer
 from src.style_coach import StylometricCoach
+from src.academic_exporter import AcademicExporter
 from src.visualizer import (
     plot_atmosphere_radar,
     plot_author_distance_heatmap,
@@ -394,13 +395,71 @@ with tab_prediction:
             help="İsterseniz tahmin Katman 2'de yalnızca seçtiğiniz dönemin yazarları arasında sınırlandırılır.",
         )
 
+    # Sürükle-Bırak Dosya Yükleme (Aşama 12)
+    uploaded_files = st.file_uploader(
+        "📂 Bilgisayarınızdan Metin Dosyası Yükleyin (.txt veya .md - Tekli veya Çoklu):",
+        type=["txt", "md"],
+        accept_multiple_files=True,
+        help="Tek dosya yüklendiğinde metin alanına aktarılır; birden fazla dosya yüklendiğinde tüm dosyalar toplu taranarak karşılaştırmalı özet tablo üretilir.",
+        key="tab1_file_uploader",
+    )
+
+    batch_loaded_text = None
+    if uploaded_files:
+        if len(uploaded_files) == 1:
+            try:
+                single_content = uploaded_files[0].read().decode("utf-8", errors="ignore")
+                batch_loaded_text = single_content
+                st.success(f"✅ **{uploaded_files[0].name}** ({len(single_content.split())} kelime) başarıyla okundu ve metin kutusuna aktarıldı.")
+            except Exception as e:
+                st.error(f"Dosya okuma hatası: {e}")
+        else:
+            st.markdown(f"#### 📚 Çoklu Dosya Toplu Taraması ({len(uploaded_files)} Dosya Yüklendi)")
+            uploaded_dict = {}
+            for f in uploaded_files:
+                try:
+                    uploaded_dict[f.name] = f.read().decode("utf-8", errors="ignore")
+                except Exception:
+                    pass
+
+            if uploaded_dict:
+                batch_exporter = AcademicExporter(classifier=clf, extractor=StylometricFeatureExtractor())
+                with st.spinner("Yüklenen tüm dosyalar hiyerarşik model ile taranıyor..."):
+                    df_batch_res = batch_exporter.batch_analyze_files(uploaded_dict)
+
+                st.dataframe(df_batch_res, use_container_width=True)
+
+                col_b1, col_b2 = st.columns([2, 3])
+                with col_b1:
+                    batch_csv_bytes = df_batch_res.to_csv(index=False, encoding="utf-8")
+                    st.download_button(
+                        label="📥 Toplu Analiz Sonuçlarını İndir (.csv)",
+                        data=batch_csv_bytes,
+                        file_name="toplu_stilometri_sonuclari_bayram_akpamukcu.csv",
+                        mime="text/csv",
+                        use_container_width=True,
+                    )
+                with col_b2:
+                    selected_batch_file = st.selectbox(
+                        "Tekil Detaylı Analiz İçin Dosya Seçin:",
+                        options=list(uploaded_dict.keys()),
+                        key="selected_batch_file_to_view",
+                    )
+                    if st.button("Seçilen Dosyayı Metin Kutusuna Aktar"):
+                        batch_loaded_text = uploaded_dict[selected_batch_file]
+
     use_hierarchical = st.checkbox(
         "🧠 Hiyerarşik Dönem Filtresi (Hierarchical Conditioning)",
         value=True,
         help="Açık olduğunda Katman 1 edebi dönem olasılıkları ve Burrows' Delta yakınlığı Katman 2 yazar olasılıklarıyla birleştirilerek anakronik (yüzyıl dışı) sapmalar engellenir.",
     )
 
-    initial_input = PRELOADED_PASSAGES[chosen_sample] if chosen_sample != "Seçiniz (Hazır Kanonik Test Pasajı)" else ""
+    if batch_loaded_text:
+        initial_input = batch_loaded_text
+    elif chosen_sample != "Seçiniz (Hazır Kanonik Test Pasajı)":
+        initial_input = PRELOADED_PASSAGES[chosen_sample]
+    else:
+        initial_input = ""
 
     text_input = st.text_area(
         "Analiz Edilecek Edebi Metin:",
@@ -836,6 +895,45 @@ with tab_performance:
                 st.success(f"✓ TÜM BİRİM TESTLER BAŞARIYLA GEÇTİ! ({result.testsRun} test çalıştırıldı, 0 hata, 0 başarısızlık).")
             else:
                 st.error(f"Testler tamamlandı: {len(result.failures)} başarısızlık, {len(result.errors)} hata.")
+
+    # Akademik LaTeX & CSV Veri İhracı (Aşama 12)
+    st.markdown("---")
+    st.markdown("#### 📄 Akademik Yayın ve Veri İhracı (Academic LaTeX & CSV Export)")
+    st.caption("TÜBİTAK 2209 Araştırma Raporu, IEEE/Springer makaleleri ve bilimsel yayınlar için tek tıkla ihracat:")
+
+    exporter = AcademicExporter(classifier=clf, extractor=StylometricFeatureExtractor())
+    latex_table_code = exporter.export_latex_results_table(
+        cv_results={"era_layer": atlas_info["era_cv"], "author_layer": atlas_info["author_cv"]},
+        test_metrics=atlas_info["eval_results"],
+    )
+    corpus_csv_data = exporter.export_corpus_summary_csv(
+        atlas_info["df_X"],
+        atlas_info["y_authors"],
+        atlas_info["y_eras"],
+    )
+
+    col_exp1, col_exp2 = st.columns(2)
+    with col_exp1:
+        st.download_button(
+            label="📄 Akademik LaTeX Tablosu İndir (.tex)",
+            data=latex_table_code,
+            file_name="stylometry_performance_bayram_akpamukcu.tex",
+            mime="text/plain",
+            help="TÜBİTAK ve akademik makaleler için hazırlanmış standart LaTeX table kodu.",
+            use_container_width=True,
+        )
+    with col_exp2:
+        st.download_button(
+            label="📊 Tüm Stilometri Veri Setini İndir (.csv)",
+            data=corpus_csv_data,
+            file_name="universal_stylometry_dataset_bayram_akpamukcu.csv",
+            mime="text/csv",
+            help="37 kanonik yazar ve 7 edebi döneme ait 70+ boyutlu öznitelik matrisi.",
+            use_container_width=True,
+        )
+
+    with st.expander("👁️ Üretilen Akademik LaTeX Kodunu İncele & Kopyala"):
+        st.code(latex_table_code, language="latex")
 
 
 # ------------------------------------------------------------------------------

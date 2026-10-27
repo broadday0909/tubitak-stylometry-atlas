@@ -32,6 +32,7 @@ from src.gutenberg_fetcher import load_universal_canon_corpus
 from src.literary_network import LiteraryPhylogenyEngine
 from src.prosody_atmosphere import ProsodyAndAtmosphereAnalyzer
 from src.style_coach import StylometricCoach
+from src.academic_exporter import AcademicExporter
 
 
 def get_blind_era_and_author_passages() -> List[Tuple[str, str, str, str]]:
@@ -272,9 +273,43 @@ def main() -> None:
         print(f"   [{idx}] [{rx['action']}] {rx['category']}: {rx['recommendation']}")
         print(f"       -> Etki: {rx['impact']}")
 
-    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 11) boru hattı kusursuz çalıştı.")
+    print("\n" + "=" * 95)
+    print(" [10] AKADEMİK VERİ İHRACI (LATEX / CSV) & ÇOKLU DOSYA ANALİZİ (AŞAMA 12)")
+    print("=" * 95)
+    exporter = AcademicExporter(classifier=clf, extractor=extractor)
+
+    # 1. LaTeX Tablosu İhracı
+    latex_code = exporter.export_latex_results_table(
+        cv_results={"era_layer": train_res["era_layer"], "author_layer": train_res["author_layer"]},
+    )
+    print("\n-> Akademik LaTeX Tablosu (Önizleme):")
+    for l_line in latex_code.splitlines()[:13]:
+        print(f"   {l_line}")
+    print("   ... [Tam LaTeX Tablosu Kodlandı]")
+
+    # 2. CSV İhracı Doğrulaması
+    csv_text = exporter.export_corpus_summary_csv(df_X, s_y_author, s_y_era)
+    print(f"\n-> Külliyat Stilometrik Veri Seti (CSV):")
+    print(f"   {len(df_X)} Örnek Blok, {df_X.shape[1]} Stilometrik Boyut, Toplam {len(csv_text.encode('utf-8')) / 1024:.1f} KB CSV üretildi.")
+
+    # 3. Çoklu Dosya Toplu Taraması (Batch File Analysis)
+    mock_files = {
+        "orwell_1984_draft.txt": blind_tests[6][3],
+        "shakespeare_soliloquy.txt": blind_tests[1][3],
+        "dickens_tale_cities.txt": blind_tests[4][3],
+    }
+    df_batch = exporter.batch_analyze_files(mock_files)
+    print(f"\n-> Çoklu Dosya Toplu Tarama Tablosu (Batch Analysis - {len(df_batch)} Dosya):")
+    batch_table = [
+        [row["Dosya Adı"], row["Kelime Sayısı"], row["Tahmin Edilen Dönem"], f"%{row['Dönem Güveni (%)']}", row["Tahmin Edilen Yazar"], f"%{row['Yazar Güveni (%)']}"]
+        for _, row in df_batch.iterrows()
+    ]
+    print(tabulate(batch_table, headers=["Dosya Adı", "Kelime", "Tahmin Dönem", "Dönem Güveni", "Tahmin Yazar", "Yazar Güveni"], tablefmt="fancy_grid"))
+
+    print("\n[BAŞARILI] Evrensel İngiliz Dili ve Edebiyatı Atlası (Aşama 12) boru hattı kusursuz çalıştı.")
 
 
 if __name__ == "__main__":
     main()
+
 
