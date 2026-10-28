@@ -157,13 +157,31 @@ st.markdown(
     /* Streamlit varsayılan footer, "Built with Streamlit", fullscreen ve embed çubuğunu gizle */
     #MainMenu {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
-    header {visibility: hidden !important; display: none !important;}
-    [data-testid="stHeader"] {visibility: hidden !important; display: none !important;}
+    header {background: transparent !important;}
+    [data-testid="stHeader"] {
+        background: transparent !important;
+        pointer-events: none !important;
+    }
     [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
     [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
     [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
     [data-testid="stFooter"], .stFooter {visibility: hidden !important; display: none !important;}
     .stDeployButton {display: none !important;}
+
+    /* Kenar çubuğu açma/kapama butonlarının daima tıklanabilir ve görünür olmasını sağla */
+    [data-testid="collapsedControl"] {
+        visibility: visible !important;
+        display: flex !important;
+        pointer-events: auto !important;
+        z-index: 99999 !important;
+        top: 12px !important;
+        left: 12px !important;
+    }
+    [data-testid="stSidebarCollapseButton"] {
+        visibility: visible !important;
+        display: flex !important;
+        pointer-events: auto !important;
+    }
     div[class*="embeddedAppMetaInfoBar"],
     div[class*="embeddedApp"],
     div[data-testid="stEmbedFooter"],
