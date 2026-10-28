@@ -209,6 +209,38 @@ st.markdown(
             box-shadow: 0 0 25px rgba(0,0,0,0.5) !important;
         }
     }
+
+    /* Mobilde ve dokunmatik cihazlarda selectbox tıklandığında klavyenin açılmasını önle */
+    div[data-baseweb="select"] input {
+        pointer-events: none !important;
+        caret-color: transparent !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+    }
+
+    /* Mavi Analiz Butonunu Mobilde Ekranın Altında Sabit (Sticky / Hep Orada) Tut */
+    @media (max-width: 991px) {
+        div[data-testid="stButton"]:has(> button[kind="primary"]),
+        div:has(> button[data-testid="stBaseButton-primary"]) {
+            position: sticky !important;
+            bottom: 14px !important;
+            z-index: 9999 !important;
+            margin-top: 10px !important;
+            margin-bottom: 10px !important;
+            background: transparent !important;
+        }
+        button[kind="primary"],
+        button[data-testid="stBaseButton-primary"] {
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.45), 0 0 15px rgba(56, 189, 248, 0.35) !important;
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            padding-top: 13px !important;
+            padding-bottom: 13px !important;
+            border-radius: 12px !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        }
+    }
+
     div[class*="embeddedAppMetaInfoBar"],
     div[class*="embeddedApp"],
     div[data-testid="stEmbedFooter"],
@@ -710,14 +742,19 @@ with tab_prediction:
             st.warning("⚠️ Lütfen analiz edilmesi için en az bir cümlelik bir edebi metin giriniz.")
         else:
             with st.spinner("Katman 1 (Dönem) ve Katman 2 (Yazar) sınıflandırıcıları çalışıyor, Burrows' Delta hesaplanıyor..."):
+                # Öznitelik çıkarımını tek seferde yap (6x hızlandırma ve anında sonuç)
+                extractor = StylometricFeatureExtractor()
+                text_metrics = extractor.extract_features(text_input)
+                input_features_df = pd.DataFrame([text_metrics])
+
                 # 1. Katman 1: Edebi Dönem Tahmini
-                predicted_era, era_probabilities = clf.predict_era(text_input)
+                predicted_era, era_probabilities = clf.predict_era(input_features_df)
                 era_conf = era_probabilities.get(predicted_era, 1.0)
 
                 # 2. Katman 2: Yazar Tahmini (Top-5 Adaylar)
                 active_filter = None if era_constraint.startswith("Tüm") else era_constraint
                 top_authors = clf.predict_top_authors(
-                    text_input,
+                    input_features_df,
                     era_filter=active_filter,
                     top_k=5,
                     use_hierarchical=use_hierarchical,
@@ -725,11 +762,7 @@ with tab_prediction:
                 best_author, best_author_prob = top_authors[0]
 
                 # 3. Burrows' Delta Z-Skor Mesafesi
-                delta_results = clf.compute_burrows_delta(text_input, top_k=5)
-
-                # 4. Anlık Metrik Röntgeni
-                extractor = StylometricFeatureExtractor()
-                text_metrics = extractor.extract_features(text_input)
+                delta_results = clf.compute_burrows_delta(input_features_df, top_k=5)
 
             hierarchical_badge = (
                 '<span style="background: rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 8px;">🧠 Hiyerarşik Koşullandırma: AKTİF</span>'
