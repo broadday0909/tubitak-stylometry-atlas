@@ -38,49 +38,142 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            background: radial-gradient(circle at 50% 40%, #1e3a8a 0%, #0f172a 75%, #020617 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             color: #ffffff;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: opacity 1.1s cubic-bezier(0.4, 0, 0.2, 1), transform 1.1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1.1s ease;
+            backdrop-filter: blur(8px);
         }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(56, 189, 248, 0.2);
-            border-top: 4px solid #38bdf8;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+        #loading-overlay.fade-out {
+            opacity: 0;
+            transform: scale(1.04);
+            visibility: hidden;
+            pointer-events: none;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .welcome-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 36px 42px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(56, 189, 248, 0.1);
+            backdrop-filter: blur(16px);
+            max-width: 90vw;
+            animation: floatUp 1.2s ease-out;
         }
+
+        @keyframes floatUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .hero-icon {
+            font-size: 3.4rem;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.4));
+            animation: pulseGlow 2.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.3)); }
+            50% { transform: scale(1.06); filter: drop-shadow(0 0 26px rgba(56, 189, 248, 0.6)); }
+        }
+
         .title {
-            font-size: 1.4rem;
+            font-size: 1.65rem;
             font-weight: 800;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             margin-bottom: 6px;
             text-align: center;
+            background: linear-gradient(135deg, #ffffff 30%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         .subtitle {
-            font-size: 0.9rem;
-            color: #93c5fd;
-            margin-bottom: 12px;
+            font-size: 0.96rem;
+            color: #94a3b8;
+            margin-bottom: 20px;
             text-align: center;
+            font-weight: 400;
+            max-width: 480px;
+            line-height: 1.5;
         }
-        .badge {
+
+        /* Zarif Pürüzsüz İlerleme Çubuğu (Smooth Ambient Line) */
+        .progress-line-container {
+            width: 220px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 22px;
+            position: relative;
+        }
+        .progress-line {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
+            animation: shimmer 1.8s infinite ease-in-out;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Künye Rozetleri */
+        .credits-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .primary-badge {
             background: rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            color: #38bdf8;
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 4px 14px;
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            color: #7dd3fc;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 6px 18px;
             border-radius: 20px;
+            letter-spacing: 0.4px;
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.15);
+        }
+        .contributors-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .contrib-label {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+        .contrib-pill {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #7dd3fc;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 16px;
         }
         #app-frame {
             position: absolute;
@@ -145,10 +238,24 @@
     <button id="theme-toggle-btn" title="Karanlık / Aydınlık Mod" aria-label="Karanlık Mod">🌙</button>
 
     <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div class="title">🏛️ TÜBİTAK: Stilometri Atlası</div>
-        <div class="subtitle">Evrensel İngiliz Dili ve Edebiyatı Hesaplamalı Analiz Motoru</div>
-        <div class="badge">Developed by Bayram Akpamukçu • with contributions from Mustafa Tunç & Yasir Tanrıverdi</div>
+        <div class="welcome-card">
+            <div class="hero-icon">🏛️</div>
+            <div class="title">TÜBİTAK Stilometri Atlası</div>
+            <div class="subtitle">Evrensel İngiliz Dili ve Edebiyatı Hesaplamalı Analiz & Üslup Haritası</div>
+            
+            <div class="progress-line-container">
+                <div class="progress-line"></div>
+            </div>
+
+            <div class="credits-container">
+                <div class="primary-badge">✨ Developed by Bayram Akpamukçu</div>
+                <div class="contributors-row">
+                    <span class="contrib-label">with contributions from</span>
+                    <span class="contrib-pill">🤝 Mustafa Tunç</span>
+                    <span class="contrib-pill">🤝 Yasir Tanrıverdi</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <iframe 
@@ -187,21 +294,23 @@
             iframe.src = customTarget.includes('?') ? customTarget + '&embed=true' : customTarget + '?embed=true';
         }
 
-        // Iframe yüklendiğinde yükleme ekranını gizle
+        // Karşılama ekranını pürüzsüz ve kademeli şekilde kapat
+        function dismissWelcome() {
+            if (overlay && !overlay.classList.contains('fade-out')) {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 1200);
+            }
+        }
+
+        // Iframe yüklendiğinde zarif geçiş yap
         iframe.onload = function() {
-            setTimeout(() => {
-                overlay.style.opacity = '0';
-                overlay.style.visibility = 'hidden';
-            }, 600);
+            setTimeout(dismissWelcome, 700);
         };
 
-        // Ağ yavaşlığı durumunda en geç 5 saniye sonra yükleme ekranını kaldır
-        setTimeout(() => {
-            if (overlay.style.visibility !== 'hidden') {
-                overlay.style.opacity = '0';
-                overlay.style.visibility = 'hidden';
-            }
-        }, 5000);
+        // En geç 4.5 saniye sonra pürüzsüz geçişi sağla
+        setTimeout(dismissWelcome, 4500);
     </script>
 </body>
 </html>
