@@ -20,6 +20,9 @@ if sys.platform == "win32":
     except AttributeError:
         pass
 
+import gc
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -383,6 +386,7 @@ def initialize_universal_atlas(
         "y_eras": s_y_era,
     }
 
+    gc.collect()
     return clf, atlas_info, X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test
 
 
