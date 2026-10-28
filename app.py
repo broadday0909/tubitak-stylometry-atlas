@@ -164,6 +164,68 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ==============================================================================
+# Karanlık Mod (Dark Mode) Durum ve CSS Yönetimi
+# ==============================================================================
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
+if st.session_state.dark_mode:
+    st.markdown(
+        """
+        <style>
+        /* Karanlık Tema Global Stilleri */
+        .stApp, body, [data-testid="stAppViewContainer"] {
+            background-color: #0b0f19 !important;
+            color: #f1f5f9 !important;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #0f172a !important;
+            border-right: 1px solid #1e293b !important;
+        }
+        .main-header {
+            color: #f8fafc !important;
+        }
+        .sub-header {
+            color: #94a3b8 !important;
+        }
+        .kpi-card {
+            background-color: #131d33 !important;
+            border: 1px solid #1e293b !important;
+        }
+        .kpi-val {
+            color: #38bdf8 !important;
+        }
+        .kpi-lbl {
+            color: #94a3b8 !important;
+        }
+        .dev-footer {
+            border-top: 1px solid #1e293b !important;
+            color: #64748b !important;
+        }
+        /* Kartlar, Sekmeler ve Butonlar */
+        div[data-testid="stTabs"] button {
+            color: #94a3b8 !important;
+        }
+        div[data-testid="stTabs"] button[aria-selected="true"] {
+            color: #38bdf8 !important;
+            border-bottom-color: #38bdf8 !important;
+        }
+        .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+            background-color: #131d33 !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+        }
+        .stSelectbox > div > div {
+            background-color: #131d33 !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 # ==============================================================================
 # Model ve Külliyat Başlatma (Streamlit Cache)
@@ -314,18 +376,28 @@ PRELOADED_PASSAGES = {
 
 
 # ==============================================================================
-# Başlık ve Kenar Çubuğu (Sidebar)
+# Başlık, Karanlık Mod Butonu ve Kenar Çubuğu (Sidebar)
 # ==============================================================================
-st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
-    'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
-    unsafe_allow_html=True,
-)
+col_header, col_theme_btn = st.columns([0.82, 0.18])
+
+with col_header:
+    st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
+        'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
+        unsafe_allow_html=True,
+    )
+
+with col_theme_btn:
+    st.write("")
+    btn_label = "☀️ Aydınlık Mod" if st.session_state.dark_mode else "🌙 Karanlık Mod"
+    if st.button(btn_label, use_container_width=True):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
 
 with st.sidebar:
     st.markdown(
