@@ -168,19 +168,19 @@ st.markdown(
     [data-testid="stFooter"], .stFooter {visibility: hidden !important; display: none !important;}
     .stDeployButton {display: none !important;}
 
-    /* Kenar çubuğu açma/kapama butonlarının daima tıklanabilir ve görünür olmasını sağla */
-    [data-testid="collapsedControl"] {
+    /* Kenar çubuğunu (Sidebar) daima açık ve sabit tut; kapandığında da açma okunu belirgin yap */
+    [data-testid="stSidebar"] {
         visibility: visible !important;
-        display: flex !important;
-        pointer-events: auto !important;
-        z-index: 99999 !important;
-        top: 12px !important;
-        left: 12px !important;
+        display: block !important;
+        transform: none !important;
+        min-width: 320px !important;
+        max-width: 340px !important;
     }
     [data-testid="stSidebarCollapseButton"] {
-        visibility: visible !important;
-        display: flex !important;
-        pointer-events: auto !important;
+        display: none !important; /* Kullanıcının yanlışlıkla sol menüyü kapatıp kaybetmesini önler */
+    }
+    [data-testid="collapsedControl"] {
+        display: none !important;
     }
     div[class*="embeddedAppMetaInfoBar"],
     div[class*="embeddedApp"],
