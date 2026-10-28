@@ -151,7 +151,7 @@ st.markdown(
         font-size: 0.92rem;
         font-weight: 600;
     }
-    /* Streamlit varsayılan footer, "Built with Streamlit" ve menüyü gizle */
+    /* Streamlit varsayılan footer, "Built with Streamlit", fullscreen ve embed çubuğunu gizle */
     #MainMenu {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
     header {visibility: hidden !important; display: none !important;}
@@ -161,9 +161,18 @@ st.markdown(
     [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
     [data-testid="stFooter"], .stFooter {visibility: hidden !important; display: none !important;}
     .stDeployButton {display: none !important;}
+    div[class*="embeddedAppMetaInfoBar"],
+    div[class*="embeddedApp"],
+    div[data-testid="stEmbedFooter"],
+    div[class*="stEmbedFooter"],
+    div[class*="EmbedFooter"],
     .viewerBadge_container__1QSob, [class*="viewerBadge"], [class*="StatusWidget"], [class*="manage-app"] {
         display: none !important;
         visibility: hidden !important;
+        height: 0px !important;
+        padding: 0px !important;
+        margin: 0px !important;
+        opacity: 0 !important;
     }
     div[data-testid="manage-app-button"] {visibility: hidden !important; display: none !important;}
     a[href*="streamlit.io"] {visibility: hidden !important; display: none !important;}

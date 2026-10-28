@@ -9,6 +9,10 @@ headless = true
 [browser]
 gatherUsageStats = false
 
+[client]
+toolbarMode = "minimal"
+showErrorDetails = false
+
 [theme]
 primaryColor = "#1e3a8a"
 backgroundColor = "#ffffff"
