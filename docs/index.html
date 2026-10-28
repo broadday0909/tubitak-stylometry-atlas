@@ -247,6 +247,11 @@
                 <div class="progress-line"></div>
             </div>
 
+            <div id="status-text" style="font-size: 0.84rem; color: #38bdf8; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation: pulseGlow 1.5s infinite ease-in-out;"></span>
+                <span>Sistem başlatılıyor, edebi külliyat yükleniyor...</span>
+            </div>
+
             <div class="credits-container">
                 <div class="primary-badge">✨ Developed by Bayram Akpamukçu</div>
                 <div class="contributors-row">
@@ -269,6 +274,20 @@
         const iframe = document.getElementById('app-frame');
         const overlay = document.getElementById('loading-overlay');
         const themeBtn = document.getElementById('theme-toggle-btn');
+        const statusText = document.getElementById('status-text');
+
+        // Karşılama ekranında durum mesajları göster
+        setTimeout(() => {
+            if (statusText) {
+                statusText.innerHTML = '<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation: pulseGlow 1.5s infinite ease-in-out;"></span><span>Stilometrik analiz motoru hazırlanıyor...</span>';
+            }
+        }, 1600);
+
+        setTimeout(() => {
+            if (statusText) {
+                statusText.innerHTML = '<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 10px #10b981;"></span><span style="color: #6ee7b7;">Sistem hazır, hoş geldiniz!</span>';
+            }
+        }, 3200);
 
         // Kayıtlı tema tercihini yükle
         const savedTheme = localStorage.getItem('atlas_theme');
@@ -294,23 +313,28 @@
             iframe.src = customTarget.includes('?') ? customTarget + '&embed=true' : customTarget + '?embed=true';
         }
 
-        // Karşılama ekranını pürüzsüz ve kademeli şekilde kapat
+        // Karşılama ekranını pürüzsüz ve kademeli şekilde kapat (En az 3.8 saniye karşılasın)
+        const minWelcomeTime = 3800;
+        const pageLoadStart = Date.now();
+
         function dismissWelcome() {
             if (overlay && !overlay.classList.contains('fade-out')) {
                 overlay.classList.add('fade-out');
                 setTimeout(() => {
                     overlay.style.display = 'none';
-                }, 1200);
+                }, 1300);
             }
         }
 
-        // Iframe yüklendiğinde zarif geçiş yap
+        // Iframe yüklendiğinde en az 3.8 saniye bekletip öyle kapat
         iframe.onload = function() {
-            setTimeout(dismissWelcome, 700);
+            const elapsed = Date.now() - pageLoadStart;
+            const remaining = Math.max(0, minWelcomeTime - elapsed);
+            setTimeout(dismissWelcome, remaining);
         };
 
-        // En geç 4.5 saniye sonra pürüzsüz geçişi sağla
-        setTimeout(dismissWelcome, 4500);
+        // Her halükarda en geç 6 saniyede aç
+        setTimeout(dismissWelcome, 6000);
     </script>
 </body>
 </html>
