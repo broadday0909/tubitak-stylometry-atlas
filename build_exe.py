@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 # Windows konsolunda UTF-8 çıktı desteği
@@ -22,15 +23,37 @@ if sys.platform == "win32":
         pass
 
 
+def kill_existing_processes() -> None:
+    """Derlemeyi kilitleyebilecek eski çalışan atlas süreçlerini sonlandırır."""
+    if sys.platform == "win32":
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/IM", "StylometryAtlas_BayramAkpamukcu.exe"],
+                capture_output=True,
+                check=False,
+            )
+            time.sleep(1.0)
+        except Exception:
+            pass
+
+
 def clean_previous_builds(base_dir: Path) -> None:
     """Önceki derlemeden kalan geçici klasörleri temizler."""
+    kill_existing_processes()
     dirs_to_remove = [base_dir / "build", base_dir / "dist"]
     files_to_remove = list(base_dir.glob("*.spec"))
 
     for d in dirs_to_remove:
         if d.exists() and d.is_dir():
             print(f"[*] Eski derleme dizini temizleniyor: {d.name}...")
-            shutil.rmtree(d, ignore_errors=True)
+            for _ in range(3):
+                try:
+                    shutil.rmtree(d)
+                    break
+                except OSError:
+                    time.sleep(1.0)
+            else:
+                shutil.rmtree(d, ignore_errors=True)
 
     for f in files_to_remove:
         try:
@@ -75,19 +98,23 @@ def build_executable(onefile: bool = False) -> Path:
         f"--add-data={app_path}{separator}.",
         f"--add-data={src_dir}{separator}src",
         f"--add-data={data_dir}{separator}data",
-        # Streamlit ve gerekli kütüphanelerin metadata/statik dosyaları
-        "--copy-metadata=streamlit",
+        f"--add-data={base_dir / '.streamlit'}{separator}.streamlit",
+        # Streamlit, Webview ve bilimsel kütüphanelerin alt modüllerini eksiksiz topla
+        "--collect-all=streamlit",
+        "--collect-all=webview",
+        "--hidden-import=streamlit.runtime.scriptrunner.magic_funcs",
+        "--collect-submodules=scipy",
+        "--collect-submodules=sklearn",
+        # Metadata kopyalama
         "--copy-metadata=tqdm",
         "--copy-metadata=regex",
         "--copy-metadata=requests",
         "--copy-metadata=packaging",
-        "--collect-data=streamlit",
-        # Gizli modül (hidden import) tanımları
+        # Temel ve gizli modül (hidden import) tanımları
         "--hidden-import=streamlit",
         "--hidden-import=streamlit.web.cli",
         "--hidden-import=sklearn",
         "--hidden-import=sklearn.utils._typedefs",
-        "--hidden-import=sklearn.neighbors._typedefs",
         "--hidden-import=sklearn.tree",
         "--hidden-import=sklearn.ensemble",
         "--hidden-import=sklearn.svm",
@@ -97,6 +124,7 @@ def build_executable(onefile: bool = False) -> Path:
         "--hidden-import=numpy",
         "--hidden-import=tabulate",
         "--hidden-import=nltk",
+        # Aşama 1-12 Tüm Proje Modülleri
         "--hidden-import=src",
         "--hidden-import=src.preprocessor",
         "--hidden-import=src.feature_extractor",
@@ -143,6 +171,25 @@ def build_executable(onefile: bool = False) -> Path:
         print(f" [✓] Üretilen Executable: {expected_exe}")
         print(f" [✓] Boyut: {size_mb:.2f} MB")
         print("=" * 95)
+
+        # Dağıtım klasörünü tek parça ZIP arşivi olarak sıkıştır
+        if not onefile:
+            import zipfile
+            dist_folder = base_dir / "dist" / target_name
+            zip_path = base_dir / "StylometryAtlas_Desktop_BayramAkpamukcu.zip"
+            print(f"\n[*] Masaüstü dağıtım paketi ZIP arşivine dönüştürülüyor: {zip_path.name}...")
+            try:
+                with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
+                    for root, dirs, files in os.walk(dist_folder):
+                        for file in files:
+                            file_p = Path(root) / file
+                            arc_name = file_p.relative_to(dist_folder.parent)
+                            zf.write(file_p, arc_name)
+                zip_mb = zip_path.stat().st_size / (1024 * 1024)
+                print(f"[✓] ZIP Dağıtım Paketi Hazır: {zip_path} ({zip_mb:.2f} MB)")
+            except Exception as zip_err:
+                print(f"[!] ZIP sıkıştırma sırasında hata oluştu: {zip_err}")
+
         print("\n[İPUCU] Artık bu dosyayı çift tıklayarak veya 'Baslat_Stylometry_Atlas.bat' ile başlatabilirsiniz.")
         return expected_exe
     else:

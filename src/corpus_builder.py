@@ -20,25 +20,47 @@ from src.feature_extractor import StylometricFeatureExtractor
 
 def chunk_text_by_words(
     text: str,
-    chunk_size: int = 100,
-    overlap: int = 30,
+    chunk_size: int = 80,
+    overlap: int = 35,
+    min_chunks: int = 4,
 ) -> List[str]:
-    """Metni kelime tabanlı kayan pencere bloklarına böler."""
+    """
+    Metni kelime tabanlı kayan pencere bloklarına böler.
+    Her yazarın eğitim ve test setinde yer alabilmesi için min_chunks (varsayılan 4)
+    blok üretilmesini garanti eder.
+    """
     words = text.split()
     if not words:
         return []
 
-    if len(words) <= chunk_size:
+    if len(words) < min_chunks:
         return [text]
 
-    step = max(1, chunk_size - overlap)
+    # Dinamik pencere: Metin min_chunks adet standart blok üretmek için kısaysa
+    eff_chunk_size = chunk_size
+    eff_overlap = overlap
+
+    if len(words) < chunk_size * min_chunks:
+        eff_chunk_size = max(20, len(words) // min_chunks)
+        eff_overlap = max(5, eff_chunk_size // 2)
+
+    step = max(1, eff_chunk_size - eff_overlap)
     chunks: List[str] = []
 
     for i in range(0, len(words), step):
-        chunk_words = words[i : i + chunk_size]
-        if len(chunk_words) < max(20, chunk_size // 3) and chunks:
+        chunk_words = words[i : i + eff_chunk_size]
+        if len(chunk_words) < max(12, eff_chunk_size // 3) and chunks:
             break
         chunks.append(" ".join(chunk_words))
+
+    # Hâlâ min_chunks'tan az blok varsa metni eşit dilimlere böl
+    if len(chunks) < min_chunks:
+        seg_len = len(words) // min_chunks
+        chunks = []
+        for c_idx in range(min_chunks):
+            start_i = c_idx * seg_len
+            end_i = (c_idx + 1) * seg_len if c_idx < min_chunks - 1 else len(words)
+            chunks.append(" ".join(words[start_i:end_i]))
 
     return chunks
 

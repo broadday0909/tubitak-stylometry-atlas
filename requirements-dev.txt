@@ -1,0 +1,6 @@
+# TÜBİTAK Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası
+# Yerel Masaüstü ve .EXE Derleme Geliştirme Bağımlılıkları
+
+-r requirements.txt
+pyinstaller>=6.4.0
+pywebview>=5.0.0

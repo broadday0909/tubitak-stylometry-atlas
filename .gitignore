@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging (GitHub 100 MB Limit Protection)
 dist/
 build/
+*.zip
 *.egg-info/
 *.egg
 *.spec

@@ -163,7 +163,7 @@ st.markdown(
 @st.cache_resource(show_spinner="Evrensel Edebiyat Külliyatı taranıyor ve çift katmanlı model eğitiliyor...")
 def initialize_universal_atlas(
     model_type: str = "svm",
-    chunk_size: int = 90,
+    chunk_size: int = 80,
     overlap: int = 35,
 ) -> Tuple[StylometryClassifier, Dict[str, Any], pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, pd.Series, pd.Series]:
     """
@@ -181,14 +181,23 @@ def initialize_universal_atlas(
         overlap=overlap,
     )
 
-    X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test = train_test_split(
-        df_X,
-        s_y_author,
-        s_y_era,
-        test_size=0.20,
-        random_state=42,
-        stratify=s_y_era,
-    )
+    try:
+        X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test = train_test_split(
+            df_X,
+            s_y_author,
+            s_y_era,
+            test_size=0.20,
+            random_state=42,
+            stratify=s_y_author,
+        )
+    except Exception:
+        X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test = train_test_split(
+            df_X,
+            s_y_author,
+            s_y_era,
+            test_size=0.20,
+            random_state=42,
+        )
 
     clf = StylometryClassifier(
         model_type=model_type,
@@ -311,11 +320,15 @@ st.markdown(
 )
 
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/tr/b/b8/T%C3%BCbitak_logo.png", width=140)
     st.markdown(
         """
-        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #38bdf8; padding: 10px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; text-align: center; border: 1px solid rgba(56, 189, 248, 0.35); margin: 8px 0 16px 0;">
-            ✨ Developed by Bayram Akpamukçu
+        <div style="text-align: center; margin-bottom: 14px; padding: 14px 10px; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);">
+            <div style="font-size: 2.3rem; margin-bottom: 2px;">🏛️</div>
+            <div style="color: #ffffff; font-weight: 800; font-size: 1.15rem; letter-spacing: 0.8px;">TÜBİTAK 2209</div>
+            <div style="color: #38bdf8; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px;">Stilometri Atlası</div>
+            <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 2px 10px; font-size: 0.72rem; font-weight: 600; margin-top: 8px;">
+                ✨ Bayram Akpamukçu
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -335,7 +348,7 @@ with st.sidebar:
 # Modeli Eğit / Yükle
 clf, atlas_info, X_train, X_test, y_auth_train, y_auth_test, y_era_train, y_era_test = initialize_universal_atlas(
     model_type=selected_model_type,
-    chunk_size=90,
+    chunk_size=80,
     overlap=35,
 )
 

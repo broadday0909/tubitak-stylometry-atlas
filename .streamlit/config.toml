@@ -1,0 +1,17 @@
+[global]
+developmentMode = false
+
+[server]
+enableCORS = false
+enableXsrfProtection = false
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#1e3a8a"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f8fafc"
+textColor = "#0f172a"
+font = "sans serif"

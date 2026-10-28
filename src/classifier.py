@@ -437,9 +437,28 @@ class StylometryClassifier:
         y_pred = self.pipeline.predict(X_test)
 
         acc = float(accuracy_score(y_true, y_pred))
-        report_str = classification_report(y_true, y_pred, target_names=self.classes_, zero_division=0)
-        report_dict = classification_report(y_true, y_pred, target_names=self.classes_, output_dict=True, zero_division=0)
-        conf_matrix = confusion_matrix(y_true, y_pred, labels=self.classes_)
+
+        # Test setinde bazı sınıflar bulunmasa dahi ValueError fırlatılmasını önle
+        unique_labels = self.classes_ if hasattr(self, "classes_") and self.classes_ is not None else np.unique(np.concatenate([y_true, y_pred]))
+        labels_list = list(unique_labels)
+        target_names_list = [str(x) for x in labels_list]
+
+        report_str = classification_report(
+            y_true,
+            y_pred,
+            labels=labels_list,
+            target_names=target_names_list,
+            zero_division=0,
+        )
+        report_dict = classification_report(
+            y_true,
+            y_pred,
+            labels=labels_list,
+            target_names=target_names_list,
+            output_dict=True,
+            zero_division=0,
+        )
+        conf_matrix = confusion_matrix(y_true, y_pred, labels=labels_list)
 
         return {
             "accuracy": acc,

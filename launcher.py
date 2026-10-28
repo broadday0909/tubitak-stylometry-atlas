@@ -1,18 +1,26 @@
 """
 TÜBİTAK Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası
 ===========================================================
-Programatik Başlatıcı ve Otomatik Web Tarayıcısı Açıcı (launcher.py)
+Programatik Yerel Masaüstü Başlatıcı (launcher.py)
 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project
 """
 
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import threading
 import time
 import webbrowser
 from pathlib import Path
+
+# PyInstaller paketleme ortamında Streamlit'in developmentMode varsaymasını önle
+os.environ["STREAMLIT_GLOBAL_DEVELOPMENT_MODE"] = "false"
+os.environ["STREAMLIT_SERVER_HEADLESS"] = "true"
+os.environ["STREAMLIT_BROWSER_GATHER_USAGE_STATS"] = "false"
+os.environ["PYTHONIOENCODING"] = "utf-8"
+os.environ["PYTHONUTF8"] = "1"
 
 # Windows konsolunda UTF-8 çıktı desteği
 if sys.platform == "win32":
@@ -21,6 +29,15 @@ if sys.platform == "win32":
         sys.stderr.reconfigure(encoding="utf-8")
     except AttributeError:
         pass
+
+# PyInstaller'ın Streamlit çalışma zamanı ve CLI modüllerini kaçırmasını önleyen açık importlar
+import streamlit.runtime.scriptrunner.magic_funcs
+import streamlit.web.bootstrap as bootstrap
+import streamlit.web.cli as stcli
+import streamlit.config as _st_config
+
+# Streamlit'in arka plan iş parçacığında çalışabilmesi için ana iş parçacığı sinyal yöneticisini devre dışı bırak
+bootstrap._set_up_signal_handler = lambda server: None
 
 
 def resolve_base_directory() -> Path:
@@ -36,17 +53,83 @@ def resolve_base_directory() -> Path:
     return Path(__file__).resolve().parent
 
 
-def open_browser_delayed(url: str = "http://localhost:8501", delay_seconds: float = 2.0) -> None:
-    """Streamlit sunucusu açılana kadar kısa bir gecikmeyle tarayıcıyı başlatır."""
-    def _open():
-        time.sleep(delay_seconds)
-        try:
-            webbrowser.open(url)
-        except Exception as e:
-            print(f"[!] Tarayıcı otomatik açılamadı: {e}. Lütfen tarayıcınızdan {url} adresine gidiniz.")
+def find_available_port(start_port: int = 8501, max_search: int = 30) -> int:
+    """Belirtilen porttan başlayarak boş bir TCP portu bulur."""
+    import socket
+    for port in range(start_port, start_port + max_search):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("127.0.0.1", port))
+                return port
+            except OSError:
+                continue
+    return start_port
 
-    thread = threading.Thread(target=_open, daemon=True)
-    thread.start()
+
+def wait_for_server(port: int, max_wait: float = 30.0) -> bool:
+    """Belirtilen portta Streamlit sunucusunun dinlemeye başlamasını bekler."""
+    import socket
+    start = time.time()
+    while time.time() - start < max_wait:
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.3):
+                return True
+        except (OSError, ConnectionRefusedError):
+            time.sleep(0.3)
+    return False
+
+
+def start_streamlit_server(app_path: Path, port: int) -> None:
+    """Streamlit web sunucusunu arka plan iş parçacığında çalıştırır."""
+    try:
+        _st_config.set_option("global.developmentMode", False)
+    except Exception:
+        pass
+
+    sys.argv = [
+        "streamlit",
+        "run",
+        str(app_path),
+        f"--server.port={port}",
+        "--server.headless=true",
+        "--global.developmentMode=false",
+        "--browser.gatherUsageStats=false",
+        "--theme.base=light",
+    ]
+
+    try:
+        stcli.main()
+    except SystemExit:
+        pass
+    except Exception as e:
+        print(f"[!] Arka plan sunucu hatası: {e}")
+
+
+def launch_browser_app_mode(url: str) -> None:
+    """
+    pywebview / WebView2 bulunamadığında Edge veya Chrome'u
+    adres çubuğu olmayan yerel masaüstü uygulama penceresi modunda açar.
+    """
+    candidates = [
+        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+    ]
+    for exe_path in candidates:
+        if os.path.exists(exe_path):
+            try:
+                print(f"[+] Bağımsız masaüstü penceresi başlatılıyor ({Path(exe_path).name} App Modu)...")
+                p = subprocess.Popen([exe_path, f"--app={url}", "--window-size=1440,900"])
+                p.wait()
+                return
+            except Exception:
+                continue
+
+    # Hiçbir tarayıcı bulunamazsa varsayılan tarayıcıyı aç
+    webbrowser.open(url)
 
 
 def print_banner() -> None:
@@ -66,7 +149,7 @@ def main() -> None:
     if str(base_dir) not in sys.path:
         sys.path.insert(0, str(base_dir))
 
-    # Konsol modu istenmişse doğrudan main.py boru hattını çalıştır
+    # Konsol doğrulama modu kontrolü
     if "--console" in sys.argv or "--test" in sys.argv:
         print("\n[+] Konsol Doğrulama Modu Seçildi. main.py çalıştırılıyor...\n")
         try:
@@ -79,7 +162,6 @@ def main() -> None:
 
     app_path = base_dir / "app.py"
     if not app_path.exists():
-        # Fallback to current working directory
         cwd_app = Path.cwd() / "app.py"
         if cwd_app.exists():
             app_path = cwd_app
@@ -87,39 +169,66 @@ def main() -> None:
             print(f"[HATA] 'app.py' dosyası bulunamadı: {app_path}")
             sys.exit(1)
 
-    port = 8501
-    url = f"http://localhost:{port}"
+    port = find_available_port(8501)
+    url = f"http://127.0.0.1:{port}"
 
-    print(f"\n[+] Streamlit Web Arayüzü Başlatılıyor: {url}")
-    print("[+] Varsayılan web tarayıcınız 2 saniye içinde otomatik olarak açılacaktır...")
-    print("[+] Uygulamayı durdurmak için bu konsol penceresini kapatabilir veya Ctrl+C tuşlarına basabilirsiniz.\n")
+    print(f"\n[+] Streamlit Arka Plan Çekirdeği Başlatılıyor: {url}")
+    print("[+] Yerel Masaüstü Uygulama Penceresi (Native Desktop Window) hazırlanıyor...")
 
-    open_browser_delayed(url, delay_seconds=2.0)
+    # Streamlit sunucusunu arka planda sessiz iş parçacığında başlat
+    server_thread = threading.Thread(
+        target=start_streamlit_server,
+        args=(app_path, port),
+        daemon=True,
+    )
+    server_thread.start()
 
-    try:
-        from streamlit.web import cli as stcli
-    except ImportError:
-        print("[HATA] 'streamlit' kütüphanesi bulunamadı. Lütfen 'pip install -r requirements.txt' komutunu çalıştırınız.")
+    # Sunucu portunun dinlemeye başlamasını bekle
+    if not wait_for_server(port, max_wait=30.0):
+        print(f"\n[HATA] Atlas sunucusu {port} portunda başlatılamadı.")
+        input("\nKapatmak icin Enter tusuna basin...")
         sys.exit(1)
 
-    # Streamlit CLI argümanları
-    sys.argv = [
-        "streamlit",
-        "run",
-        str(app_path),
-        f"--server.port={port}",
-        "--server.headless=true",
-        "--browser.gatherUsageStats=false",
-        "--theme.base=light",
-    ]
+    print("[✓] Çekirdek sunucu hazır! Masaüstü penceresi açılıyor...\n")
 
+    app_title = "TÜBİTAK Stilometri Atlası - Developed by Bayram Akpamukçu"
+
+    # pywebview ile masaüstü penceresi oluştur
+    opened_with_webview = False
     try:
-        sys.exit(stcli.main())
-    except SystemExit:
-        pass
-    except KeyboardInterrupt:
-        print("\n[+] Atlas uygulaması kullanıcı tarafından sonlandırıldı.")
+        import webview
+        webview.create_window(
+            app_title,
+            url,
+            width=1440,
+            height=900,
+            min_size=(1024, 700),
+        )
+        opened_with_webview = True
+        webview.start()
+    except Exception as w_err:
+        print(f"[!] WebView başlatılamadı ({w_err}). Yedek masaüstü penceresi modu devreye giriyor...")
+        opened_with_webview = False
+
+    if not opened_with_webview:
+        launch_browser_app_mode(url)
+
+    print("\n[+] Atlas masaüstü penceresi kapatıldı. Uygulama güvenle sonlandırıldı.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as se:
+        if se.code not in (0, None):
+            print(f"\n[!] Uygulama {se.code} koduyla sonlandı.")
+            input("\nKapatmak icin Enter tusuna basin...")
+    except KeyboardInterrupt:
+        print("\n[+] Atlas uygulaması sonlandırıldı.")
+    except Exception as ex:
+        import traceback
+        traceback.print_exc()
+        print("\n" + "=" * 95)
+        print(f"[KRİTİK HATA] Atlas başlatılırken beklenmedik hata oluştu: {ex}")
+        print("=" * 95)
+        input("\nKapatmak icin Enter tusuna basin...")
