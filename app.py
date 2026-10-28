@@ -554,10 +554,6 @@ st.markdown(
     'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
     unsafe_allow_html=True,
 )
-st.markdown(
-    '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | with contributions from Mustafa Tunç & Yasir Tanrıverdi | TÜBİTAK Project</div>',
-    unsafe_allow_html=True,
-)
 
 with st.sidebar:
     st.markdown(
@@ -610,17 +606,6 @@ with st.sidebar:
     st.write(f"• **Kanonik Yazar Sayısı:** `{atlas_info['total_authors']}` Yazar")
     st.write(f"• **Toplam Örnek Blok:** `{atlas_info['total_samples']}` Metin Bloğu")
     st.write(f"• **Stilometrik Boyut:** `{atlas_info['feature_count']}` Öznitelik")
-    st.markdown("---")
-    st.markdown(
-        """
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; color: #475569; font-size: 0.8rem; font-weight: 600;">
-            🚀 <b>Developed by Bayram Akpamukçu</b><br>
-            <span style="font-size: 0.75rem; color: #1e3a8a; font-weight: 700;">with contributions from Mustafa Tunç & Yasir Tanrıverdi</span><br>
-            <span style="font-size: 0.72rem; color: #94a3b8;">TÜBİTAK 2209 / Computational Literary Studies</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 # ==============================================================================
