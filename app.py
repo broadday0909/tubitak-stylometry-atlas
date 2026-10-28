@@ -168,19 +168,46 @@ st.markdown(
     [data-testid="stFooter"], .stFooter {visibility: hidden !important; display: none !important;}
     .stDeployButton {display: none !important;}
 
-    /* Kenar çubuğunu (Sidebar) daima açık ve sabit tut; kapandığında da açma okunu belirgin yap */
-    [data-testid="stSidebar"] {
-        visibility: visible !important;
-        display: block !important;
-        transform: none !important;
-        min-width: 320px !important;
-        max-width: 340px !important;
+    /* Masaüstünde (Geniş Ekranda) Kenar Çubuğunu Sabit Açık Tut */
+    @media (min-width: 992px) {
+        [data-testid="stSidebar"] {
+            visibility: visible !important;
+            display: block !important;
+            transform: none !important;
+            min-width: 310px !important;
+            max-width: 330px !important;
+        }
+        [data-testid="stSidebarCollapseButton"] {
+            display: none !important;
+        }
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
     }
-    [data-testid="stSidebarCollapseButton"] {
-        display: none !important; /* Kullanıcının yanlışlıkla sol menüyü kapatıp kaybetmesini önler */
-    }
-    [data-testid="collapsedControl"] {
-        display: none !important;
+
+    /* Mobilde (Dar Ekranda) Menü ve Açma/Kapama Düğmesi Uyumlu Çalışsın */
+    @media (max-width: 991px) {
+        [data-testid="collapsedControl"] {
+            visibility: visible !important;
+            display: flex !important;
+            top: 14px !important;
+            left: 14px !important;
+            z-index: 999999 !important;
+            background: #ffffff !important;
+            border-radius: 50% !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+            width: 40px !important;
+            height: 40px !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        [data-testid="stSidebarCollapseButton"] {
+            visibility: visible !important;
+            display: flex !important;
+        }
+        [data-testid="stSidebar"] {
+            box-shadow: 0 0 25px rgba(0,0,0,0.5) !important;
+        }
     }
     div[class*="embeddedAppMetaInfoBar"],
     div[class*="embeddedApp"],
