@@ -558,22 +558,22 @@ st.markdown(
 with st.sidebar:
     st.markdown(
         """
-        <div style="text-align: center; margin-bottom: 14px; padding: 14px 10px; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);">
-            <div style="font-size: 2.3rem; margin-bottom: 2px;">🏛️</div>
-            <div style="color: #ffffff; font-weight: 800; font-size: 1.15rem; letter-spacing: 0.8px;">TÜBİTAK 2209</div>
-            <div style="color: #38bdf8; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px;">Stilometri Atlası</div>
-            <div style="display: flex; flex-direction: column; gap: 6px; align-items: center; margin-top: 10px;">
-                <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 14px; padding: 4px 14px; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.3px;">
+        <div style="text-align: center; margin-bottom: 18px; padding: 18px 14px; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.45); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);">
+            <div style="font-size: 2.6rem; margin-bottom: 4px;">🏛️</div>
+            <div style="color: #ffffff; font-weight: 800; font-size: 1.28rem; letter-spacing: 0.9px;">TÜBİTAK 2209</div>
+            <div style="color: #38bdf8; font-weight: 700; font-size: 0.92rem; text-transform: uppercase; letter-spacing: 1.3px; margin-top: 3px;">Stilometri Atlası</div>
+            <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 12px;">
+                <div style="display: inline-block; background: rgba(56, 189, 248, 0.22); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.55); border-radius: 16px; padding: 6px 18px; font-size: 0.86rem; font-weight: 700; letter-spacing: 0.4px;">
                     ✨ Bayram Akpamukçu
                 </div>
-                <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px;">
+                <div style="font-size: 0.74rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.9px; margin-top: 2px;">
                     with contributions from
                 </div>
-                <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
-                    <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 14px; padding: 4px 12px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.3px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; align-items: center; width: 100%;">
+                    <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 14px; padding: 5px 16px; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.3px;">
                         🤝 Mustafa Tunç
                     </div>
-                    <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 14px; padding: 4px 12px; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.3px;">
+                    <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 14px; padding: 5px 16px; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.3px;">
                         🤝 Yasir Tanrıverdi
                     </div>
                 </div>
