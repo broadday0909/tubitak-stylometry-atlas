@@ -151,6 +151,14 @@ st.markdown(
         font-size: 0.92rem;
         font-weight: 600;
     }
+    /* Streamlit varsayılan footer, "Built with Streamlit" ve menüyü gizle */
+    #MainMenu {visibility: hidden; display: none !important;}
+    footer {visibility: hidden; display: none !important;}
+    header {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden; display: none !important;}
+    .viewerBadge_container__1QSob, [data-testid="stStatusWidget"], .viewerBadge_link__1S137, [data-testid="manage-app-button"] {
+        display: none !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
