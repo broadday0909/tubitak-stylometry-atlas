@@ -191,22 +191,52 @@
             transition: filter 0.3s ease;
         }
 
-        /* Sağ Üst Sabit Karanlık Mod Butonu */
-        #theme-toggle-btn {
+        /* Sağ Üst Sabit Kontrol Çubuğu (Canlı Sayaç ve Gece Modu Butonu) */
+        #top-floating-bar {
             position: fixed;
             top: 14px;
             right: 18px;
-            width: 44px;
-            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999999;
+        }
+
+        #live-users-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 40px;
+            padding: 0 13px;
+            border-radius: 20px;
+            background: #ffffff;
+            color: #0f172a;
+            border: 1.5px solid rgba(16, 185, 129, 0.45);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            font-size: 0.95rem;
+            font-weight: 700;
+            user-select: none;
+            transition: all 0.25s ease;
+        }
+
+        html.dark-theme #live-users-pill {
+            background: #1e293b;
+            color: #34d399;
+            border-color: rgba(52, 211, 153, 0.6);
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+        }
+
+        #theme-toggle-btn {
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: #ffffff;
             color: #0f172a;
             border: 1.5px solid rgba(56, 189, 248, 0.5);
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             line-height: 1;
             cursor: pointer;
-            z-index: 9999999;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -239,7 +269,12 @@
     </style>
 </head>
 <body>
-    <button id="theme-toggle-btn" title="Karanlık / Aydınlık Mod" aria-label="Karanlık Mod">🌙</button>
+    <div id="top-floating-bar">
+        <div id="live-users-pill" title="Anlık Çevrimiçi Ziyaretçi">
+            <span>🟢</span> <span id="online-count">1</span>
+        </div>
+        <button id="theme-toggle-btn" title="Karanlık / Aydınlık Mod" aria-label="Karanlık Mod">🌙</button>
+    </div>
 
     <div id="loading-overlay">
         <div class="welcome-card">
@@ -339,6 +374,16 @@
 
         // Her halükarda en geç 6 saniyede aç
         setTimeout(dismissWelcome, 6000);
+
+        // Streamlit'ten gelen canlı aktif kullanıcı sayısını anlık güncelle
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'TUBITAK_LIVE_USERS') {
+                const countSpan = document.getElementById('online-count');
+                if (countSpan && event.data.count) {
+                    countSpan.textContent = event.data.count;
+                }
+            }
+        });
     </script>
 </body>
 </html>

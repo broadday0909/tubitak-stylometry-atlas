@@ -571,11 +571,8 @@ def get_live_active_users() -> int:
 with st.sidebar:
     live_users = get_live_active_users()
     st.markdown(
-        f"""
-        <div style="text-align: center; margin-bottom: 18px; padding: 18px 14px; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.45); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3); position: relative;">
-            <div style="position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.45); border-radius: 12px; padding: 3px 8px; font-size: 0.78rem; font-weight: 700; color: #34d399;" title="Anlık Aktif Kullanıcı">
-                🟢 {live_users}
-            </div>
+        """
+        <div style="text-align: center; margin-bottom: 18px; padding: 18px 14px; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.45); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);">
             <div style="font-size: 2.6rem; margin-bottom: 4px;">🏛️</div>
             <div style="color: #ffffff; font-weight: 800; font-size: 1.28rem; letter-spacing: 0.9px;">TÜBİTAK 2209</div>
             <div style="color: #38bdf8; font-weight: 700; font-size: 0.92rem; text-transform: uppercase; letter-spacing: 1.3px; margin-top: 3px;">Stilometri Atlası</div>
@@ -598,6 +595,18 @@ with st.sidebar:
         </div>
         """,
         unsafe_allow_html=True,
+    )
+    # Sağ üstteki canlı sayaca anlık kullanıcı bilgisini ilet
+    st.components.v1.html(
+        f"""
+        <script>
+            try {{
+                window.top.postMessage({{type: 'TUBITAK_LIVE_USERS', count: {live_users}}}, '*');
+            }} catch(e) {{}}
+        </script>
+        """,
+        height=0,
+        width=0,
     )
     st.markdown("### ⚙️ Atlas Yapılandırması")
 
