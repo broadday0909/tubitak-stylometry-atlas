@@ -152,60 +152,22 @@ st.markdown(
         font-weight: 600;
     }
     /* Streamlit varsayılan footer, "Built with Streamlit" ve menüyü gizle */
-    #MainMenu {visibility: hidden; display: none !important;}
-    footer, [data-testid="stFooter"], .stFooter, [class*="viewerBadge"], [class*="StatusWidget"], [class*="manage-app"] {
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    footer {visibility: hidden !important; display: none !important;}
+    header {visibility: hidden !important; display: none !important;}
+    [data-testid="stHeader"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stFooter"], .stFooter {visibility: hidden !important; display: none !important;}
+    .stDeployButton {display: none !important;}
+    .viewerBadge_container__1QSob, [class*="viewerBadge"], [class*="StatusWidget"], [class*="manage-app"] {
         display: none !important;
         visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
     }
-    header {visibility: hidden;}
-    [data-testid="stToolbar"] {visibility: hidden; display: none !important;}
-
-    /* Sağ Üst Yuvarlak Şık Karanlık Mod Butonu (Simge) */
-    div[data-testid="stColumn"]:has(.theme-btn-marker) {
-        display: flex !important;
-        justify-content: flex-end !important;
-        align-items: flex-start !important;
-        text-align: right !important;
-    }
-    div[data-testid="stColumn"]:has(.theme-btn-marker) .theme-btn-marker {
-        display: none !important;
-    }
-    div[data-testid="stColumn"]:has(.theme-btn-marker) button {
-        border-radius: 50% !important;
-        width: 44px !important;
-        height: 44px !important;
-        min-width: 44px !important;
-        max-width: 44px !important;
-        min-height: 44px !important;
-        max-height: 44px !important;
-        font-size: 1.35rem !important;
-        line-height: 1 !important;
-        padding: 0 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
-        background: #f1f5f9 !important;
-        color: #0f172a !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        transition: all 0.25s ease !important;
-        margin-top: 4px !important;
-    }
-    div[data-testid="stColumn"]:has(.theme-btn-marker) button:hover {
-        transform: scale(1.12) !important;
-        border-color: #38bdf8 !important;
-        background: #e2e8f0 !important;
-        box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25) !important;
-    }
-    div[data-testid="stColumn"]:has(.theme-btn-marker) button p,
-    div[data-testid="stColumn"]:has(.theme-btn-marker) button div {
-        margin: 0 !important;
-        padding: 0 !important;
-        line-height: 1 !important;
-    }
+    div[data-testid="manage-app-button"] {visibility: hidden !important; display: none !important;}
+    a[href*="streamlit.io"] {visibility: hidden !important; display: none !important;}
+    a[href*="share.streamlit.io"] {visibility: hidden !important; display: none !important;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -334,22 +296,10 @@ if st.session_state.dark_mode:
             color: #f1f5f9 !important;
         }
         /* Genel İkincil Butonlar (Karanlık Mod) */
-        button[data-testid="baseButton-secondary"]:not(div[data-testid="stColumn"]:has(.theme-btn-marker) button) {
+        button[data-testid="baseButton-secondary"] {
             background-color: #1e293b !important;
             color: #f1f5f9 !important;
             border: 1px solid #334155 !important;
-        }
-        /* Karanlık Mod Simge Butonu Görünümü (Güneş Işıltısı) */
-        div[data-testid="stColumn"]:has(.theme-btn-marker) button {
-            background: #1e293b !important;
-            color: #fbbf24 !important;
-            border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
-            box-shadow: 0 0 12px rgba(251, 191, 36, 0.25) !important;
-        }
-        div[data-testid="stColumn"]:has(.theme-btn-marker) button:hover {
-            background: #334155 !important;
-            border-color: #fbbf24 !important;
-            box-shadow: 0 0 18px rgba(251, 191, 36, 0.45) !important;
         }
         </style>
         """,
@@ -506,28 +456,18 @@ PRELOADED_PASSAGES = {
 
 
 # ==============================================================================
-# Başlık, Karanlık Mod Simgesi ve Kenar Çubuğu (Sidebar)
+# Başlık ve Kenar Çubuğu (Sidebar)
 # ==============================================================================
-col_title, col_icon = st.columns([0.93, 0.07])
-
-with col_title:
-    st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
-        'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
-        unsafe_allow_html=True,
-    )
-
-with col_icon:
-    st.markdown('<div class="theme-btn-marker"></div>', unsafe_allow_html=True)
-    theme_icon = "☀️" if st.session_state.dark_mode else "🌙"
-    if st.button(theme_icon, key="theme_toggle_btn", help="Karanlık / Aydınlık Mod"):
-        st.session_state.dark_mode = not st.session_state.dark_mode
-        st.rerun()
+st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
+    'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
+    unsafe_allow_html=True,
+)
 
 with st.sidebar:
     st.markdown(
