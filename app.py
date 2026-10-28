@@ -474,7 +474,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown(
-    '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
+    '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu • with contributions from Mustafa Tunç | TÜBİTAK Computational Literary Studies</div>',
     unsafe_allow_html=True,
 )
 
@@ -485,8 +485,11 @@ with st.sidebar:
             <div style="font-size: 2.3rem; margin-bottom: 2px;">🏛️</div>
             <div style="color: #ffffff; font-weight: 800; font-size: 1.15rem; letter-spacing: 0.8px;">TÜBİTAK 2209</div>
             <div style="color: #38bdf8; font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px;">Stilometri Atlası</div>
-            <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 2px 10px; font-size: 0.72rem; font-weight: 600; margin-top: 8px;">
+            <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 3px 12px; font-size: 0.74rem; font-weight: 700; margin-top: 8px;">
                 ✨ Bayram Akpamukçu
+            </div>
+            <div style="margin-top: 6px; font-size: 0.70rem; color: #94a3b8; font-weight: 500;">
+                with contributions from <span style="color: #38bdf8; font-weight: 600;">Mustafa Tunç</span>
             </div>
         </div>
         """,
@@ -521,7 +524,8 @@ with st.sidebar:
         """
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; color: #475569; font-size: 0.8rem; font-weight: 600;">
             🚀 <b>Developed by Bayram Akpamukçu</b><br>
-            TÜBİTAK 2209 / Computational Literary Studies
+            <span style="font-size: 0.74rem; color: #64748b; font-weight: 500;">with contributions from Mustafa Tunç</span><br>
+            <span style="font-size: 0.72rem; color: #94a3b8;">TÜBİTAK 2209 / Computational Literary Studies</span>
         </div>
         """,
         unsafe_allow_html=True,
