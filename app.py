@@ -210,6 +210,18 @@ st.markdown(
         }
     }
 
+    /* Mobilde Başlığın Altındaki Künye Kartını Göster, Masaüstünde Gizle (Çünkü Sol Menüde Zaten Var) */
+    @media (min-width: 992px) {
+        .mobile-attribution-card {
+            display: none !important;
+        }
+    }
+    @media (max-width: 991px) {
+        .mobile-attribution-card {
+            display: block !important;
+        }
+    }
+
     /* Mobilde ve dokunmatik cihazlarda selectbox tıklandığında klavyenin açılmasını önle */
     div[data-baseweb="select"] input {
         pointer-events: none !important;
@@ -552,6 +564,29 @@ st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili 
 st.markdown(
     '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
     'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    """
+    <div class="mobile-attribution-card">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 10px 0 16px 0; padding: 12px 14px; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.45); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25); text-align: center;">
+            <div style="display: inline-block; background: rgba(56, 189, 248, 0.22); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.55); border-radius: 16px; padding: 5px 16px; font-size: 0.86rem; font-weight: 700; letter-spacing: 0.3px;">
+                ✨ Bayram Akpamukçu
+            </div>
+            <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px;">
+                with contributions from
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 12px; padding: 4px 12px; font-size: 0.78rem; font-weight: 700;">
+                    🤝 Mustafa Tunç
+                </div>
+                <div style="display: inline-block; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 12px; padding: 4px 12px; font-size: 0.78rem; font-weight: 700;">
+                    🤝 Yasir Tanrıverdi
+                </div>
+            </div>
+        </div>
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
