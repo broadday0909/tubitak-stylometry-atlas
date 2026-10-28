@@ -153,16 +153,208 @@ st.markdown(
     }
     /* Streamlit varsayılan footer, "Built with Streamlit" ve menüyü gizle */
     #MainMenu {visibility: hidden; display: none !important;}
-    footer {visibility: hidden; display: none !important;}
+    footer, [data-testid="stFooter"], .stFooter, [class*="viewerBadge"], [class*="StatusWidget"], [class*="manage-app"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+    }
     header {visibility: hidden;}
     [data-testid="stToolbar"] {visibility: hidden; display: none !important;}
-    .viewerBadge_container__1QSob, [data-testid="stStatusWidget"], .viewerBadge_link__1S137, [data-testid="manage-app-button"] {
+
+    /* Sağ Üst Yuvarlak Şık Karanlık Mod Butonu (Simge) */
+    div[data-testid="stColumn"]:has(.theme-btn-marker) {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: flex-start !important;
+        text-align: right !important;
+    }
+    div[data-testid="stColumn"]:has(.theme-btn-marker) .theme-btn-marker {
         display: none !important;
+    }
+    div[data-testid="stColumn"]:has(.theme-btn-marker) button {
+        border-radius: 50% !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        max-width: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
+        font-size: 1.35rem !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        transition: all 0.25s ease !important;
+        margin-top: 4px !important;
+    }
+    div[data-testid="stColumn"]:has(.theme-btn-marker) button:hover {
+        transform: scale(1.12) !important;
+        border-color: #38bdf8 !important;
+        background: #e2e8f0 !important;
+        box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25) !important;
+    }
+    div[data-testid="stColumn"]:has(.theme-btn-marker) button p,
+    div[data-testid="stColumn"]:has(.theme-btn-marker) button div {
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+# ==============================================================================
+# Karanlık Mod Durumu ve Dinamik Tema
+# ==============================================================================
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
+if st.session_state.dark_mode:
+    st.markdown(
+        """
+        <style>
+        /* Karanlık Tema Global Stilleri */
+        .stApp, body, [data-testid="stAppViewContainer"], .main, .stAppHeader {
+            background-color: #0b0f19 !important;
+            color: #f1f5f9 !important;
+        }
+        [data-testid="stSidebar"], [data-testid="stSidebarContent"] {
+            background-color: #0d1322 !important;
+            border-right: 1px solid #1e293b !important;
+        }
+        [data-testid="stSidebar"] hr {
+            border-color: #1e293b !important;
+        }
+        .main-header, h1, h2, h3, h4, h5, h6 {
+            color: #f8fafc !important;
+        }
+        .sub-header, p, span, label, [data-testid="stWidgetLabel"] p {
+            color: #cbd5e1 !important;
+        }
+        .kpi-card {
+            background-color: #111a2e !important;
+            border: 1px solid #1e293b !important;
+            color: #f8fafc !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        }
+        .kpi-val {
+            color: #38bdf8 !important;
+        }
+        .kpi-lbl {
+            color: #94a3b8 !important;
+        }
+        .dev-footer {
+            border-top: 1px solid #1e293b !important;
+            color: #64748b !important;
+        }
+        /* Tab stilleri */
+        div[data-testid="stTabs"] {
+            border-bottom: 1px solid #1e293b !important;
+        }
+        div[data-testid="stTabs"] button {
+            color: #94a3b8 !important;
+        }
+        div[data-testid="stTabs"] button[aria-selected="true"] {
+            color: #38bdf8 !important;
+            border-bottom: 2px solid #38bdf8 !important;
+        }
+        /* Input, Textarea ve Selectboxlar */
+        .stTextInput input, .stTextArea textarea, .stNumberInput input {
+            background-color: #111a2e !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+        }
+        .stTextInput input:focus, .stTextArea textarea:focus {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 0 1px #38bdf8 !important;
+        }
+        .stSelectbox > div > div, div[data-baseweb="select"] > div {
+            background-color: #111a2e !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+        }
+        div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
+            background-color: #111a2e !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+        }
+        li[role="option"] {
+            background-color: #111a2e !important;
+            color: #f8fafc !important;
+        }
+        li[role="option"]:hover, li[aria-selected="true"] {
+            background-color: #1e293b !important;
+            color: #38bdf8 !important;
+        }
+        [data-testid="stFileUploader"] section {
+            background-color: #111a2e !important;
+            border: 1px dashed #334155 !important;
+            color: #cbd5e1 !important;
+        }
+        /* Expander ve Containerlar */
+        [data-testid="stExpander"] {
+            background-color: #111a2e !important;
+            border: 1px solid #1e293b !important;
+            border-radius: 8px !important;
+        }
+        [data-testid="stExpander"] details summary {
+            color: #f1f5f9 !important;
+        }
+        [data-testid="stExpander"] details summary:hover {
+            color: #38bdf8 !important;
+        }
+        /* Tablolar ve Veri Çerçeveleri */
+        [data-testid="stDataFrame"], .stDataFrame, div[data-testid="stTable"] {
+            background-color: #111a2e !important;
+        }
+        div[data-testid="stTable"] table {
+            color: #f1f5f9 !important;
+            background-color: #111a2e !important;
+        }
+        div[data-testid="stTable"] th {
+            background-color: #1e293b !important;
+            color: #38bdf8 !important;
+            border-color: #334155 !important;
+        }
+        div[data-testid="stTable"] td {
+            border-color: #1e293b !important;
+            color: #cbd5e1 !important;
+        }
+        div[data-testid="stAlert"] {
+            background-color: #111a2e !important;
+            border: 1px solid #334155 !important;
+            color: #f1f5f9 !important;
+        }
+        /* Genel İkincil Butonlar (Karanlık Mod) */
+        button[data-testid="baseButton-secondary"]:not(div[data-testid="stColumn"]:has(.theme-btn-marker) button) {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #334155 !important;
+        }
+        /* Karanlık Mod Simge Butonu Görünümü (Güneş Işıltısı) */
+        div[data-testid="stColumn"]:has(.theme-btn-marker) button {
+            background: #1e293b !important;
+            color: #fbbf24 !important;
+            border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.25) !important;
+        }
+        div[data-testid="stColumn"]:has(.theme-btn-marker) button:hover {
+            background: #334155 !important;
+            border-color: #fbbf24 !important;
+            box-shadow: 0 0 18px rgba(251, 191, 36, 0.45) !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ==============================================================================
@@ -314,18 +506,28 @@ PRELOADED_PASSAGES = {
 
 
 # ==============================================================================
-# Başlık ve Kenar Çubuğu (Sidebar)
+# Başlık, Karanlık Mod Simgesi ve Kenar Çubuğu (Sidebar)
 # ==============================================================================
-st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
-    'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
-    unsafe_allow_html=True,
-)
+col_title, col_icon = st.columns([0.93, 0.07])
+
+with col_title:
+    st.markdown('<div class="main-header">🏛️ TÜBİTAK: Evrensel İngiliz Dili ve Edebiyatı Stilometri Atlası</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="sub-header">Chaucer\'dan Modernizm\'e 7 Edebi Dönem, 37 Kanonik Yazar, '
+        'Çift Katmanlı Sınıflandırma ve Burrows\' Delta Z-Skor Mesafesi Analizi</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="dev-badge">👨‍💻 Developed by Bayram Akpamukçu | TÜBİTAK Computational Literary Studies & Stylometry Project</div>',
+        unsafe_allow_html=True,
+    )
+
+with col_icon:
+    st.markdown('<div class="theme-btn-marker"></div>', unsafe_allow_html=True)
+    theme_icon = "☀️" if st.session_state.dark_mode else "🌙"
+    if st.button(theme_icon, key="theme_toggle_btn", help="Karanlık / Aydınlık Mod"):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
 
 with st.sidebar:
     st.markdown(
